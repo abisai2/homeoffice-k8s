@@ -1,28 +1,28 @@
 # Verified Upstream Versions & Config Notes
 
 > **Rule:** do NOT trust training data for the software stack. Before authoring a
-> component's config, fetch its **current** upstream docs and record here: the pinned
-> version, the authoritative source URL, the date verified, and any config-schema notes
-> (especially keys that changed). Renovate keeps these current after bootstrap.
+> component's config, fetch its **current** upstream version/schema (live registry, `helm
+> show values`, `talosctl images`, GitHub API) and record it here: pinned version, source,
+> date, and config-schema notes (esp. keys that changed). Renovate keeps these current.
 >
-> Status: ⛔ PENDING (not yet verified) · ✅ VERIFIED. Fill the row at the component's `.0` checkpoint.
+> Status: ⛔ PENDING · ✅ VERIFIED. Filled at each component's `.0` checkpoint.
 
-| Component | Pinned version | Source of truth (verify here) | Verified | Notes |
+| Component | Pinned version | Source of truth (verified via) | Verified | Notes |
 |---|---|---|---|---|
-| Talos Linux | _v1.13.x_ ⛔ | https://github.com/siderolabs/talos/releases · https://www.talos.dev/v1.13/ | — | confirm latest 1.13 patch + shipped Kubernetes version |
-| Talos Image Factory | schematic ⛔ | https://factory.talos.dev | — | vmware platform; extensions iscsi-tools + util-linux-tools |
-| Kubernetes | _as shipped_ ⛔ | (from Talos release notes) | — | match kubectl client to this |
-| Terraform | ≥1.9 ⛔ | https://developer.hashicorp.com/terraform | — | `use_lockfile` S3 backend needs ≥1.10 — verify |
-| vsphere provider | ⛔ | https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs | — | `vsphere_virtual_machine`, anti-affinity rule schema |
-| Cilium (chart) | ⛔ | https://docs.cilium.io · https://github.com/cilium/cilium/releases | — | `kubeProxyReplacement`, `l2announcements`, `gatewayAPI`, LB-IPAM CRDs |
-| Gateway API CRDs | ⛔ | https://github.com/kubernetes-sigs/gateway-api/releases | — | standard channel; install before Cilium gatewayAPI |
-| Argo CD (chart) | ⛔ | https://artifacthub.io/packages/helm/argo/argo-cd | — | repo-server KSOPS init/volume keys |
-| KSOPS | ⛔ | https://github.com/viaduct-ai/kustomize-sops/releases | — | exec plugin image tag for repo-server |
-| SOPS | ⛔ | https://github.com/getsops/sops/releases | — | |
-| cert-manager (chart) | ⛔ | https://cert-manager.io/docs · https://artifacthub.io/packages/helm/cert-manager/cert-manager | — | Cloudflare DNS-01 solver; recursive NS for split-horizon |
-| Longhorn (chart) | ⛔ | https://longhorn.io/docs · https://github.com/longhorn/longhorn/releases | — | **backup-target setting key** (backupTarget vs defaultBackupStore); node scheduling |
-| CloudNativePG (operator) | ⛔ | https://cloudnative-pg.io/documentation/ | — | `Cluster`/`ScheduledBackup` API group+version |
-| Authentik (chart) | ⛔ | https://docs.goauthentik.io · https://artifacthub.io/packages/helm/goauthentik/authentik | — | external CNPG DSN, Redis, media PVC |
-| Velero (chart + plugin) | ⛔ | https://velero.io/docs · https://github.com/vmware-tanzu/velero-plugin-for-aws | — | AWS plugin for Wasabi (S3-compatible, custom endpoint/region) |
-| Renovate | ⛔ | https://docs.renovatebot.com | — | datasources: github-releases, helm, docker, terraform |
-| govc | 0.52.0 ✅ | (installed on mgmt) | 2026-06-03 | VMware CLI for template import + discovery |
+| Talos Linux | **v1.13.3** ✅ | GitHub releases API (latest v1.13.x) | 2026-06-03 | installed talosctl client matches |
+| Kubernetes | **v1.36.1** ✅ | `talosctl images default` (kube-apiserver/kubelet) | 2026-06-03 | etcd v3.6.11; installed kubectl 1.36.1 matches |
+| Talos Image Factory | schematic (created P1.1) ⛔ | https://factory.talos.dev | 2026-06-03 | `vmware-amd64.ova`; extensions `iscsi-tools` + `util-linux-tools` (vmware platform has open-vm-tools built in — no guest-agent ext needed) |
+| Terraform | **v1.15.5** ✅ | installed | 2026-06-03 | supports S3 backend `use_lockfile` |
+| vsphere provider | **2.12.0** ✅ | registry.terraform.io/v1/providers/hashicorp/vsphere | 2026-06-03 | pin in `required_providers`; verify `vsphere_virtual_machine` + anti-affinity schema at P1.2 |
+| Gateway API CRDs | **v1.5.1** ✅ | GitHub kubernetes-sigs/gateway-api latest | 2026-06-03 | standard channel; install before Cilium gatewayAPI |
+| Cilium (chart) | ⛔ | `helm show values` + https://docs.cilium.io | — | `kubeProxyReplacement`, `l2announcements`, `gatewayAPI`, LB-IPAM CRDs (verify at P3.0) |
+| Argo CD (chart) | ⛔ | https://artifacthub.io/packages/helm/argo/argo-cd | — | repo-server KSOPS init/volume keys (P4.0) |
+| KSOPS | ⛔ | https://github.com/viaduct-ai/kustomize-sops/releases | — | exec plugin image tag for repo-server (P4.0) |
+| SOPS | installed ✅ | mgmt | 2026-06-03 | round-trip verified P0.2 |
+| cert-manager (chart) | ⛔ | https://cert-manager.io/docs | — | Cloudflare DNS-01 solver; recursive NS for split-horizon (P7.1) |
+| Longhorn (chart) | ⛔ | https://longhorn.io/docs | — | **backup-target setting key**; node scheduling (P7.3) |
+| CloudNativePG (operator) | ⛔ | https://cloudnative-pg.io/documentation/ | — | `Cluster`/`ScheduledBackup` API group+version (P7.4) |
+| Authentik (chart) | ⛔ | https://docs.goauthentik.io | — | external CNPG DSN, Redis, media PVC (P7.6) |
+| Velero (chart + plugin) | ⛔ | https://velero.io/docs · velero-plugin-for-aws | — | AWS plugin for Wasabi (custom endpoint/region) (P7.7) |
+| Renovate | ⛔ | https://docs.renovatebot.com | — | manager config refined at P7 |
+| govc | 0.52.0 ✅ | installed | 2026-06-03 | template import + discovery |

@@ -5,10 +5,11 @@
 > Status legend: ☐ pending · ◐ in-progress · ☑ done · ⚠ blocked.
 
 ## RESUME HERE
-- **Phase / checkpoint:** P1.0 (next) — upstream VERIFY: vsphere provider, Talos Image Factory, Talos v1.13.x
+- **Phase / checkpoint:** P1.1 (next) — build Talos Image Factory schematic (vmware + iscsi/util-linux) → import OVA as vCenter template
 - **Branch:** `build`
-- **Last commit:** `58b1296` (P0.5)
-- **Next action:** execute P1.0 — fetch current upstream docs, fill `VERIFIED-VERSIONS.md`, then P1.1 OVA template.
+- **Last commit:** P1.0 (VERIFIED-VERSIONS updated)
+- **Next action:** P1.1 — POST schematic to factory.talos.dev, fetch `vmware-amd64.ova` for v1.13.3, import to `fs1-esxi-templates` as template `talos-v1.13.3` via govc; then P1.2 terraform scaffold + Wasabi `homeoffice-k8s-tfstate` bucket.
+- **Verified pins:** Talos v1.13.3 · k8s v1.36.1 · vsphere provider 2.12.0 · Gateway API CRDs v1.5.1 (see VERIFIED-VERSIONS.md).
 - **Remaining pauses (max-autonomy):** 🚦 only **PR build→main (P10.2)** and any **destructive restore/teardown** (P8.2/P9.1). Everything else (apply, bootstrap, in-cluster, tags) runs unattended.
 
 ## Gate policy (confirmed: Maximum autonomy)
@@ -26,7 +27,7 @@ Approval required ONLY: ④ PR build→main, ⑥ destructive restore/teardown/sh
 - ☑ P0.5 renovate.json skeleton (valid JSON) — `58b1296`
 
 ### Phase 1 — Terraform: template + VMs
-- ☐ P1.0 VERIFY vsphere provider + Image Factory + Talos v1.13.x
+- ☑ P1.0 VERIFY — Talos v1.13.3, k8s v1.36.1, vsphere provider 2.12.0, Gateway API v1.5.1
 - ☐ P1.1 Image Factory schematic + OVA → vCenter template
 - ☐ P1.2 terraform scaffold + Wasabi backend (`init`/`validate`)
 - ☐ P1.3 vms.tf + anti-affinity + outputs (`plan` = 6 VMs)
