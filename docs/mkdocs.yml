@@ -1,0 +1,32 @@
+site_name: homeoffice-k8s
+site_description: A declarative, GitOps-driven Talos cluster on VMware — built as a series of blog posts.
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+    - scheme: slate
+      primary: indigo
+docs_dir: posts
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - toc:
+      permalink: true
+nav:
+  - Overview: 01-overview.md
+  - VMware & Terraform: 02-vmware-and-terraform.md
+  - Talos config & secrets: 03-talos-config-and-secrets.md
+  - GitOps bootstrap: 04-gitops-bootstrap.md
+  - Networking (Cilium + Gateway API): 05-networking.md
+  - Storage & databases (Longhorn + CNPG): 06-storage-and-databases.md
+  - Identity & TLS (Authentik + cert-manager): 07-identity-and-tls.md
+  - Backups & disaster recovery: 08-backups-and-disaster-recovery.md
