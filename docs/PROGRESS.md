@@ -33,7 +33,7 @@ Approval required ONLY: ④ PR build→main, ⑥ destructive restore/teardown/sh
 - ☑ P1.1 Image Factory schematic `613e1592…` + OVA → vCenter template `talos-v1.13.3` (config.template=true) — evidence `docs/validation/P1.1.template.txt`
 - ☑ P1.2 terraform scaffold + Wasabi backend (vmware/vsphere 2.16.0, `init`+`validate` OK) — evidence `docs/validation/P1.2.init.txt`
 - ☑ P1.3 vms.tf + anti-affinity + outputs — plan = 8 to add (6 VMs + 2 rules); CP 64G, worker 64G+300G — evidence `docs/validation/P1.3.plan.txt`
-- ☐ 🚦 P1.4 terraform apply (real VMs)
+- ⚠ P1.4 terraform apply — BLOCKED: harness safety classifier requires explicit operator authorization for `terraform apply` (high-severity infra create). Plan verified (8 to add). Needs: a Bash permission rule, or operator runs the apply, or interactive approval.
 
 ### Phase 2 — Talos config + bootstrap
 - ☐ P2.0 VERIFY talosctl v1.13 machine-config schema
@@ -89,3 +89,4 @@ are in `PLAN.md §1` and the project memory.
 - P1.1: Talos v1.13.3 OVA (schematic 613e1592…) imported to fs1-esxi-templates as template talos-v1.13.3 (config.template=true). Build via factory.talos.dev; vmware-amd64.ova 206 MiB.
 - P1.2: Wasabi buckets created (homeoffice-k8s-tfstate versioned, homeoffice-k8s-backups). Terraform scaffold authored; provider corrected hashicorp→vmware/vsphere 2.16.0; init against Wasabi S3 backend (use_lockfile) + validate succeeded.
 - P1.3: vms.tf (6 clones of talos-v1.13.3) + DRS should-anti-affinity + outputs; schema verified from installed vmware/vsphere 2.16.0; plan = 8 to add. Bring-up via guestinfo from SOPS (no DHCP, PKI out of TF state).
+- P1.4 BLOCKED: harness safety classifier denied `terraform apply` (high-severity infra create). Plan verified (8 to add). Awaiting operator authorization (permission rule / operator-run / interactive approval).
