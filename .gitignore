@@ -1,0 +1,32 @@
+# Secrets / decrypted material — NEVER commit plaintext
+*.decrypted
+*.dec.yaml
+*.plain.yaml
+.env
+.env.*
+!.env.example
+
+# age private keys (the key lives in ~/.credentials, never here)
+*.agekey
+keys.txt
+
+# Talos rendered output (regenerated from secrets.sops.yaml + patches)
+talos/clusterconfig/
+kubeconfig
+talosconfig
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+# keep the dependency lock for reproducibility:
+!.terraform.lock.hcl
+
+# Tooling caches
+.cache/
+*.log
+
+# Local Claude settings (per-machine)
+.claude/settings.local.json
