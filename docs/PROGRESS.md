@@ -5,13 +5,13 @@
 > Status legend: ☐ pending · ◐ in-progress · ☑ done · ⚠ blocked.
 
 ## RESUME HERE
-- **Phase / checkpoint:** P1.3 (next) — author `terraform/vms.tf` (clone `talos-v1.13.3` ×6) + anti-affinity + outputs
+- **Phase / checkpoint:** P1.4 (running) — `terraform apply` creates the 6 VMs
 - **Branch:** `build`
-- **Last commit:** P1.2 (terraform scaffold + Wasabi backend init/validate)
-- **Next action:** P1.3 — write `vms.tf` (vsphere_virtual_machine clone from template per `var.nodes`: OS disk, optional 300G data disk on workers, MAC-pinned NIC on `vds01_pg-Kubernetes`), `anti-affinity.tf` (DRS should-rules: separate CPs, separate workers), `outputs.tf` (name→MAC/ip). Verify `terraform plan` = 6 to add → `docs/validation/P1.3.plan.txt`. Then 🚦-free P1.4 apply.
+- **Last commit:** P1.3 (vms.tf + plan = 8 to add)
+- **Next action:** P1.4 — `terraform apply -auto-approve` (8 to add: 6 VM clones + 2 should-anti-affinity rules); VMs boot to Talos maintenance mode (no config yet). On success → P2.0 (verify talosctl machine-config schema) then P2.1 patches + talos-gen.sh. **Bring-up = guestinfo set by the bootstrap from SOPS (no DHCP dependency, PKI stays out of TF state).**
 - **TF env reminder:** export `AWS_ACCESS_KEY_ID/SECRET` from `wasabi-homeoffice-k8s.creds` (backend) and `VSPHERE_USER/PASSWORD` from `vcenter-admin.creds` (provider) before plan/apply.
 - **Key facts:** template `talos-v1.13.3` in `/ap169home-dc/vm/Templates` (config.template=true) · schematic `613e1592…961245` · installer img `factory.talos.dev/installer/613e1592…961245:v1.13.3` · network `vds01_pg-Kubernetes` · ds `fs1-esxi-ds1` · pool `Kubernetes Pool` · folder `/vm/Kubernetes` · TF creds via `vcenter-admin.creds` (VSPHERE_USER/PASSWORD env).
-- **Verified pins:** Talos v1.13.3 · k8s v1.36.1 · vsphere 2.12.0 · Gateway API v1.5.1.
+- **Verified pins:** Talos v1.13.3 · k8s v1.36.1 · vsphere 2.16.0 · Gateway API v1.5.1.
 - **Remaining pauses (max-autonomy):** 🚦 only **PR build→main (P10.2)** and any **destructive restore/teardown** (P8.2/P9.1). Everything else (apply, bootstrap, in-cluster, tags) runs unattended.
 
 ## Gate policy (confirmed: Maximum autonomy)
@@ -32,7 +32,7 @@ Approval required ONLY: ④ PR build→main, ⑥ destructive restore/teardown/sh
 - ☑ P1.0 VERIFY — Talos v1.13.3, k8s v1.36.1, vsphere provider 2.12.0, Gateway API v1.5.1
 - ☑ P1.1 Image Factory schematic `613e1592…` + OVA → vCenter template `talos-v1.13.3` (config.template=true) — evidence `docs/validation/P1.1.template.txt`
 - ☑ P1.2 terraform scaffold + Wasabi backend (vmware/vsphere 2.16.0, `init`+`validate` OK) — evidence `docs/validation/P1.2.init.txt`
-- ☐ P1.3 vms.tf + anti-affinity + outputs (`plan` = 6 VMs)
+- ☑ P1.3 vms.tf + anti-affinity + outputs — plan = 8 to add (6 VMs + 2 rules); CP 64G, worker 64G+300G — evidence `docs/validation/P1.3.plan.txt`
 - ☐ 🚦 P1.4 terraform apply (real VMs)
 
 ### Phase 2 — Talos config + bootstrap
@@ -88,3 +88,4 @@ are in `PLAN.md §1` and the project memory.
 - P0 complete: repo scaffolded on `build`, SOPS round-trip verified, 5 checkpoint commits (`cbbbaf5`..`58b1296`). Tooling verified: terraform 1.15.5, kubectl 1.36.1, talosctl/sops/age/govc/cilium/argocd/velero present. Wasabi region us-east-1. Gate policy: maximum autonomy. Next: P1.0.
 - P1.1: Talos v1.13.3 OVA (schematic 613e1592…) imported to fs1-esxi-templates as template talos-v1.13.3 (config.template=true). Build via factory.talos.dev; vmware-amd64.ova 206 MiB.
 - P1.2: Wasabi buckets created (homeoffice-k8s-tfstate versioned, homeoffice-k8s-backups). Terraform scaffold authored; provider corrected hashicorp→vmware/vsphere 2.16.0; init against Wasabi S3 backend (use_lockfile) + validate succeeded.
+- P1.3: vms.tf (6 clones of talos-v1.13.3) + DRS should-anti-affinity + outputs; schema verified from installed vmware/vsphere 2.16.0; plan = 8 to add. Bring-up via guestinfo from SOPS (no DHCP, PKI out of TF state).
