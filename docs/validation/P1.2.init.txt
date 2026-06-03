@@ -1,0 +1,4 @@
+Terraform v1.15.5
+on linux_amd64
++ provider registry.terraform.io/vmware/vsphere v2.16.0
+backend: Wasabi s3 homeoffice-k8s-tfstate (versioned), use_lockfile; provider vmware/vsphere ~>2.16

@@ -5,10 +5,11 @@
 > Status legend: ☐ pending · ◐ in-progress · ☑ done · ⚠ blocked.
 
 ## RESUME HERE
-- **Phase / checkpoint:** P1.2 (next) — Terraform scaffold + Wasabi S3 backend
+- **Phase / checkpoint:** P1.3 (next) — author `terraform/vms.tf` (clone `talos-v1.13.3` ×6) + anti-affinity + outputs
 - **Branch:** `build`
-- **Last commit:** P1.1 (template imported)
-- **Next action:** P1.2 — create Wasabi bucket `homeoffice-k8s-tfstate` (us-east-1) via `wasabi-homeoffice-k8s.creds`; author `terraform/{versions,providers,variables,terraform.tfvars}.tf` (vsphere 2.12.0, backend "s3" Wasabi, `use_lockfile`); `terraform init` + `validate`. Then P1.3 vms.tf (clone `talos-v1.13.3`).
+- **Last commit:** P1.2 (terraform scaffold + Wasabi backend init/validate)
+- **Next action:** P1.3 — write `vms.tf` (vsphere_virtual_machine clone from template per `var.nodes`: OS disk, optional 300G data disk on workers, MAC-pinned NIC on `vds01_pg-Kubernetes`), `anti-affinity.tf` (DRS should-rules: separate CPs, separate workers), `outputs.tf` (name→MAC/ip). Verify `terraform plan` = 6 to add → `docs/validation/P1.3.plan.txt`. Then 🚦-free P1.4 apply.
+- **TF env reminder:** export `AWS_ACCESS_KEY_ID/SECRET` from `wasabi-homeoffice-k8s.creds` (backend) and `VSPHERE_USER/PASSWORD` from `vcenter-admin.creds` (provider) before plan/apply.
 - **Key facts:** template `talos-v1.13.3` in `/ap169home-dc/vm/Templates` (config.template=true) · schematic `613e1592…961245` · installer img `factory.talos.dev/installer/613e1592…961245:v1.13.3` · network `vds01_pg-Kubernetes` · ds `fs1-esxi-ds1` · pool `Kubernetes Pool` · folder `/vm/Kubernetes` · TF creds via `vcenter-admin.creds` (VSPHERE_USER/PASSWORD env).
 - **Verified pins:** Talos v1.13.3 · k8s v1.36.1 · vsphere 2.12.0 · Gateway API v1.5.1.
 - **Remaining pauses (max-autonomy):** 🚦 only **PR build→main (P10.2)** and any **destructive restore/teardown** (P8.2/P9.1). Everything else (apply, bootstrap, in-cluster, tags) runs unattended.
@@ -30,7 +31,7 @@ Approval required ONLY: ④ PR build→main, ⑥ destructive restore/teardown/sh
 ### Phase 1 — Terraform: template + VMs
 - ☑ P1.0 VERIFY — Talos v1.13.3, k8s v1.36.1, vsphere provider 2.12.0, Gateway API v1.5.1
 - ☑ P1.1 Image Factory schematic `613e1592…` + OVA → vCenter template `talos-v1.13.3` (config.template=true) — evidence `docs/validation/P1.1.template.txt`
-- ☐ P1.2 terraform scaffold + Wasabi backend (`init`/`validate`)
+- ☑ P1.2 terraform scaffold + Wasabi backend (vmware/vsphere 2.16.0, `init`+`validate` OK) — evidence `docs/validation/P1.2.init.txt`
 - ☐ P1.3 vms.tf + anti-affinity + outputs (`plan` = 6 VMs)
 - ☐ 🚦 P1.4 terraform apply (real VMs)
 
@@ -86,3 +87,4 @@ are in `PLAN.md §1` and the project memory.
 - (init) Ledger created. Awaiting go on P0.1.
 - P0 complete: repo scaffolded on `build`, SOPS round-trip verified, 5 checkpoint commits (`cbbbaf5`..`58b1296`). Tooling verified: terraform 1.15.5, kubectl 1.36.1, talosctl/sops/age/govc/cilium/argocd/velero present. Wasabi region us-east-1. Gate policy: maximum autonomy. Next: P1.0.
 - P1.1: Talos v1.13.3 OVA (schematic 613e1592…) imported to fs1-esxi-templates as template talos-v1.13.3 (config.template=true). Build via factory.talos.dev; vmware-amd64.ova 206 MiB.
+- P1.2: Wasabi buckets created (homeoffice-k8s-tfstate versioned, homeoffice-k8s-backups). Terraform scaffold authored; provider corrected hashicorp→vmware/vsphere 2.16.0; init against Wasabi S3 backend (use_lockfile) + validate succeeded.

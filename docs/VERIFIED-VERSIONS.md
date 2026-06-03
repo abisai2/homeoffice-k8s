@@ -13,7 +13,7 @@
 | Kubernetes | **v1.36.1** ✅ | `talosctl images default` (kube-apiserver/kubelet) | 2026-06-03 | etcd v3.6.11; installed kubectl 1.36.1 matches |
 | Talos Image Factory | **schematic `613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245`** ✅ | factory.talos.dev (POST /schematics) | 2026-06-03 | OVA `vmware-amd64.ova` v1.13.3 (206 MiB, HTTP 200); installer image `factory.talos.dev/installer/613e1592…961245:v1.13.3` (use in Talos `install.image`); ext `iscsi-tools` + `util-linux-tools` (vmware platform ships open-vm-tools — no guest-agent ext) |
 | Terraform | **v1.15.5** ✅ | installed | 2026-06-03 | supports S3 backend `use_lockfile` |
-| vsphere provider | **2.12.0** ✅ | registry.terraform.io/v1/providers/hashicorp/vsphere | 2026-06-03 | pin in `required_providers`; verify `vsphere_virtual_machine` + anti-affinity schema at P1.2 |
+| vsphere provider | **vmware/vsphere 2.16.0** ✅ | registry.terraform.io/v1/providers/vmware/vsphere | 2026-06-03 | provider MOVED hashicorp→vmware (hashicorp mirror stale at 2.12); init+validate OK; verify `vsphere_virtual_machine`/anti-affinity schema at P1.3 |
 | Gateway API CRDs | **v1.5.1** ✅ | GitHub kubernetes-sigs/gateway-api latest | 2026-06-03 | standard channel; install before Cilium gatewayAPI |
 | Cilium (chart) | ⛔ | `helm show values` + https://docs.cilium.io | — | `kubeProxyReplacement`, `l2announcements`, `gatewayAPI`, LB-IPAM CRDs (verify at P3.0) |
 | Argo CD (chart) | ⛔ | https://artifacthub.io/packages/helm/argo/argo-cd | — | repo-server KSOPS init/volume keys (P4.0) |
