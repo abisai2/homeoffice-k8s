@@ -5,10 +5,10 @@
 > Status legend: ☐ pending · ◐ in-progress · ☑ done · ⚠ blocked.
 
 ## RESUME HERE
-- **Phase / checkpoint:** P3.0 (next, autonomous) — Cilium chart/values verification. Two steps wait on the operator: **P1.4 `terraform apply`** (create VMs) and **P2.3 bootstrap** (both gated). Continuing autonomous authoring ahead of them.
+- **Phase / checkpoint:** P4.0 (next, autonomous) — Argo CD chart + KSOPS wiring verification. Operator step pending: **P2.3 Talos bootstrap** (command below); then P3.2 Cilium install (in cluster).
 - **Branch:** `build`
-- **Last commit:** P2.0/2.1/2.2 (Talos config authored + validated; PKI generated)
-- **Next action:** P3.0 — verify current Cilium chart + values keys (kubeProxyReplacement, l2announcements, gatewayAPI, LB-IPAM) via `helm show values`; then P3.1 author `kubernetes/apps/cilium/`. Also still to author: `scripts/bootstrap.sh` (Talos bring-up driver, for the operator to run at P2.3).
+- **Last commit:** P3.0/3.1 (Cilium manifests authored + linted)
+- **Next action:** P4.0 verify Argo chart + KSOPS repo-server wiring → P4.1 author `kubernetes/bootstrap/argocd/` + `root-app.yaml` + `platform-appset.yaml`. Then continue P5/P6/P7 authoring. Gated/in-cluster steps (P2.3, P3.2, P4.2, P7.9) run when the cluster is up.
 - **Operator-run queue:** (1) ✅ apply done — 6 VMs up. (2) **Talos bootstrap** (first run failed — GOVC_ not exported; fixed w/ guard) — run: `set -a; source ~/.credentials/api-tokens/vcenter-admin.creds; set +a; export SOPS_AGE_KEY_FILE=~/.credentials/age/homeoffice-k8s.agekey; cd /mnt/homeoffice-infra/repos/homeoffice-k8s; ./scripts/bootstrap.sh talos`
 - **TF env reminder:** export `AWS_ACCESS_KEY_ID/SECRET` from `wasabi-homeoffice-k8s.creds` (backend) and `VSPHERE_USER/PASSWORD` from `vcenter-admin.creds` (provider) before plan/apply.
 - **Key facts:** template `talos-v1.13.3` in `/ap169home-dc/vm/Templates` (config.template=true) · schematic `613e1592…961245` · installer img `factory.talos.dev/installer/613e1592…961245:v1.13.3` · network `vds01_pg-Kubernetes` · ds `fs1-esxi-ds1` · pool `Kubernetes Pool` · folder `/vm/Kubernetes` · TF creds via `vcenter-admin.creds` (VSPHERE_USER/PASSWORD env).
@@ -47,9 +47,9 @@ permission bypasses, regardless of the in-conversation "max autonomy". Operating
 - ☐ P2.3 bootstrap — driver `scripts/bootstrap.sh talos` AUTHORED & ready (guestinfo inject → etcd bootstrap → kubeconfig). Operator-run (VLAN23 no DHCP + no vmtools → guestinfo bring-up).
 
 ### Phase 3 — Cilium
-- ☐ P3.0 VERIFY Cilium chart + values keys + Gateway API CRDs
-- ☐ P3.1 cilium kustomize dir (helm template + kubeconform)
-- ☐ 🚦 P3.2 install Cilium + Gateway API CRDs (nodes Ready)
+- ☑ P3.0 VERIFY Cilium 1.19.4 + values + CRD apiVersions (IP pool cilium.io/v2, L2 v2alpha1)
+- ☑ P3.1 cilium kustomize dir — helm template 34 obj + kubeconform OK — evidence `docs/validation/P3.1.lint.txt`
+- ☐ P3.2 install Cilium + Gateway API CRDs — GATED (in-cluster; runs as part of the operator cluster-bootstrap, needs nodes up from P2.3)
 
 ### Phase 4 — Argo CD + root app
 - ☐ P4.0 VERIFY Argo chart + KSOPS wiring
@@ -98,3 +98,4 @@ are in `PLAN.md §1` and the project memory.
 - Harness boundary confirmed: classifier blocks unattended terraform apply, self-editing settings, and cred-wrapper bypass. Revised model: Claude authors/plans/verifies/commits; operator runs gated infra/cluster mutations. infra.sh helper removed.
 - P2.0/2.1/2.2 (autonomous, leapfrogging blocked apply): Talos schema verified from talosctl 1.13.3; authored common/controlplane/worker + 6 node patches + scripts/talos-gen.sh; PKI generated to talos/secrets.sops.yaml (SOPS); all 6 node configs validate --mode metal OK.
 - P1.4 done (operator ran apply): 6 VMs created+powered on. P2.3 driver scripts/bootstrap.sh authored (guestinfo bring-up: VLAN23 has no DHCP and Talos maintenance mode runs no vmtools, so config is injected via guestinfo, nodes boot to static IPs .31-.36). Ready for operator to run.
+- P3.0/3.1: Cilium 1.19.4 verified (kubeProxyReplacement true, VIP .30; CRD apiVersions corrected vs reference: IP pool cilium.io/v2, L2 v2alpha1). Authored kubernetes/apps/cilium/ (kustomization+values+lb-pool .120-.139+l2policy); helm template 34 obj + kubeconform clean.

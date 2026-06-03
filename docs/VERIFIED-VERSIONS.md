@@ -16,7 +16,7 @@
 | Terraform | **v1.15.5** ✅ | installed | 2026-06-03 | supports S3 backend `use_lockfile` |
 | vsphere provider | **vmware/vsphere 2.16.0** ✅ | registry.terraform.io/v1/providers/vmware/vsphere | 2026-06-03 | provider MOVED hashicorp→vmware (hashicorp mirror stale at 2.12); init+validate OK; verify `vsphere_virtual_machine`/anti-affinity schema at P1.3 |
 | Gateway API CRDs | **v1.5.1** ✅ | GitHub kubernetes-sigs/gateway-api latest | 2026-06-03 | standard channel; install before Cilium gatewayAPI |
-| Cilium (chart) | ⛔ | `helm show values` + https://docs.cilium.io | — | `kubeProxyReplacement`, `l2announcements`, `gatewayAPI`, LB-IPAM CRDs (verify at P3.0) |
+| Cilium (chart) | **1.19.4** ✅ | helm repo cilium + cilium v1.19.4 source | 2026-06-03 | kubeProxyReplacement:true, k8sServiceHost=VIP .30:6443, l2announcements+gatewayAPI on; **CiliumLoadBalancerIPPool → cilium.io/v2** (promoted), **CiliumL2AnnouncementPolicy → v2alpha1**; render 34 obj + kubeconform OK |
 | Argo CD (chart) | ⛔ | https://artifacthub.io/packages/helm/argo/argo-cd | — | repo-server KSOPS init/volume keys (P4.0) |
 | KSOPS | ⛔ | https://github.com/viaduct-ai/kustomize-sops/releases | — | exec plugin image tag for repo-server (P4.0) |
 | SOPS | installed ✅ | mgmt | 2026-06-03 | round-trip verified P0.2 |

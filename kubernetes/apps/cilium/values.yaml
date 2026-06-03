@@ -1,0 +1,43 @@
+# Cilium values tuned for Talos: kube-proxy replacement, L2 LB, Gateway API.
+# Must match the values used at bootstrap so Argo doesn't fight the install.
+---
+# Talos: API server reached via the control-plane VIP (no kube-proxy yet).
+kubeProxyReplacement: true
+k8sServiceHost: "172.16.23.30"
+k8sServicePort: 6443
+
+ipam:
+  mode: kubernetes
+
+# Required on Talos (immutable / strict securityContext).
+securityContext:
+  capabilities:
+    ciliumAgent:
+      [CHOWN, KILL, NET_ADMIN, NET_RAW, IPC_LOCK, SYS_ADMIN, SYS_RESOURCE, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    cleanCiliumState: [NET_ADMIN, SYS_ADMIN, SYS_RESOURCE]
+cgroup:
+  autoMount:
+    enabled: false
+  hostRoot: /sys/fs/cgroup
+
+# LoadBalancer Services via L2 announcements (no MetalLB).
+l2announcements:
+  enabled: true
+externalIPs:
+  enabled: true
+loadBalancer:
+  algorithm: maglev
+
+# Gateway API support (provides the 'cilium' GatewayClass). Requires the
+# Gateway API CRDs to be installed in the cluster first (see bootstrap).
+gatewayAPI:
+  enabled: true
+
+operator:
+  replicas: 2
+
+# Observability (lightweight; full Grafana stack is deferred).
+hubble:
+  enabled: true
+  relay:
+    enabled: true
