@@ -5,24 +5,25 @@
 > Status legend: ☐ pending · ◐ in-progress · ☑ done · ⚠ blocked.
 
 ## RESUME HERE
-- **Phase / checkpoint:** P0.1 (not yet started — awaiting operator go + gate-policy confirm)
-- **Branch:** `build` (not yet created)
-- **Last commit:** none
-- **Next action:** on go, execute P0.1 (`git init` + `build` branch + scaffold).
-- **Open approval gates ahead:** 🚦 P1.4 apply · P2.2 secrets · P2.3 bootstrap · P3.2/P4.2 in-cluster · P7.9 tag · P8.2/P9.1 restore/shutdown · P10.2 PR.
+- **Phase / checkpoint:** P1.0 (next) — upstream VERIFY: vsphere provider, Talos Image Factory, Talos v1.13.x
+- **Branch:** `build`
+- **Last commit:** `58b1296` (P0.5)
+- **Next action:** execute P1.0 — fetch current upstream docs, fill `VERIFIED-VERSIONS.md`, then P1.1 OVA template.
+- **Remaining pauses (max-autonomy):** 🚦 only **PR build→main (P10.2)** and any **destructive restore/teardown** (P8.2/P9.1). Everything else (apply, bootstrap, in-cluster, tags) runs unattended.
 
-## Gate policy (confirmed: ___)
-Autonomous: authoring, scaffolding, `terraform plan`, validate/lint, verification, docs, commits to `build`.
-Approval required: ① terraform apply ② Talos secrets+bootstrap ③ first in-cluster apply ④ PR build→main ⑤ release tag ⑥ restore/teardown/shutdown.
+## Gate policy (confirmed: Maximum autonomy)
+Autonomous (no pause): authoring, scaffolding, `terraform apply`, Talos secrets+bootstrap, in-cluster
+applies, release tags, commits to `build` — all tracked here + committed.
+Approval required ONLY: ④ PR build→main, ⑥ destructive restore/teardown/shutdown of running infra.
 
 ## Checkpoint status
 
-### Phase 0 — Foundation
-- ☐ P0.1 git init + `build` branch + scaffold + .gitignore
-- ☐ P0.2 `.sops.yaml` creation rules (homeoffice-k8s age recipient)
-- ☐ P0.3 Taskfile + repo-pinned install-prereqs.sh
-- ☐ P0.4 docs skeleton (PLAN/PROGRESS/VERIFIED-VERSIONS/adr/mkdocs/posts)
-- ☐ P0.5 renovate.json skeleton
+### Phase 0 — Foundation ✅
+- ☑ P0.1 git init + `build` branch + scaffold + .gitignore — `cbbbaf5`
+- ☑ P0.2 `.sops.yaml` creation rules (homeoffice-k8s age recipient; round-trip verified) — `997e088`
+- ☑ P0.3 Taskfile + repo-pinned install-prereqs.sh — `19eabea`
+- ☑ P0.4 docs skeleton (PLAN/PROGRESS/VERIFIED-VERSIONS/adr/mkdocs/posts) — `058c925`
+- ☑ P0.5 renovate.json skeleton (valid JSON) — `58b1296`
 
 ### Phase 1 — Terraform: template + VMs
 - ☐ P1.0 VERIFY vsphere provider + Image Factory + Talos v1.13.x
@@ -81,3 +82,4 @@ are in `PLAN.md §1` and the project memory.
 
 ## Event log (append-only)
 - (init) Ledger created. Awaiting go on P0.1.
+- P0 complete: repo scaffolded on `build`, SOPS round-trip verified, 5 checkpoint commits (`cbbbaf5`..`58b1296`). Tooling verified: terraform 1.15.5, kubectl 1.36.1, talosctl/sops/age/govc/cilium/argocd/velero present. Wasabi region us-east-1. Gate policy: maximum autonomy. Next: P1.0.
