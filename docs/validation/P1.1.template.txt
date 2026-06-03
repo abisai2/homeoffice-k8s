@@ -1,0 +1,13 @@
+# P1.1 evidence — Talos OVA imported as vCenter template (2026-06-03T22:28:38Z)
+schematic: 613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245
+config.template = true
+Name:           talos-v1.13.3
+  Path:         /ap169home-dc/vm/Templates/talos-v1.13.3
+  UUID:         4214a7ca-e397-5031-95dd-118e5b8cb614
+  Guest name:   Other 3.x Linux (64-bit)
+  Memory:       2048MB
+  CPU:          2 vCPU(s)
+  Power state:  poweredOff
+  Boot time:    <nil>
+  IP address:   
+  Host:         esxi01.homeoffice.local

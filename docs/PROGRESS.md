@@ -5,11 +5,12 @@
 > Status legend: ☐ pending · ◐ in-progress · ☑ done · ⚠ blocked.
 
 ## RESUME HERE
-- **Phase / checkpoint:** P1.1 (next) — build Talos Image Factory schematic (vmware + iscsi/util-linux) → import OVA as vCenter template
+- **Phase / checkpoint:** P1.2 (next) — Terraform scaffold + Wasabi S3 backend
 - **Branch:** `build`
-- **Last commit:** P1.0 (VERIFIED-VERSIONS updated)
-- **Next action:** P1.1 — POST schematic to factory.talos.dev, fetch `vmware-amd64.ova` for v1.13.3, import to `fs1-esxi-templates` as template `talos-v1.13.3` via govc; then P1.2 terraform scaffold + Wasabi `homeoffice-k8s-tfstate` bucket.
-- **Verified pins:** Talos v1.13.3 · k8s v1.36.1 · vsphere provider 2.12.0 · Gateway API CRDs v1.5.1 (see VERIFIED-VERSIONS.md).
+- **Last commit:** P1.1 (template imported)
+- **Next action:** P1.2 — create Wasabi bucket `homeoffice-k8s-tfstate` (us-east-1) via `wasabi-homeoffice-k8s.creds`; author `terraform/{versions,providers,variables,terraform.tfvars}.tf` (vsphere 2.12.0, backend "s3" Wasabi, `use_lockfile`); `terraform init` + `validate`. Then P1.3 vms.tf (clone `talos-v1.13.3`).
+- **Key facts:** template `talos-v1.13.3` in `/ap169home-dc/vm/Templates` (config.template=true) · schematic `613e1592…961245` · installer img `factory.talos.dev/installer/613e1592…961245:v1.13.3` · network `vds01_pg-Kubernetes` · ds `fs1-esxi-ds1` · pool `Kubernetes Pool` · folder `/vm/Kubernetes` · TF creds via `vcenter-admin.creds` (VSPHERE_USER/PASSWORD env).
+- **Verified pins:** Talos v1.13.3 · k8s v1.36.1 · vsphere 2.12.0 · Gateway API v1.5.1.
 - **Remaining pauses (max-autonomy):** 🚦 only **PR build→main (P10.2)** and any **destructive restore/teardown** (P8.2/P9.1). Everything else (apply, bootstrap, in-cluster, tags) runs unattended.
 
 ## Gate policy (confirmed: Maximum autonomy)
@@ -28,7 +29,7 @@ Approval required ONLY: ④ PR build→main, ⑥ destructive restore/teardown/sh
 
 ### Phase 1 — Terraform: template + VMs
 - ☑ P1.0 VERIFY — Talos v1.13.3, k8s v1.36.1, vsphere provider 2.12.0, Gateway API v1.5.1
-- ☐ P1.1 Image Factory schematic + OVA → vCenter template
+- ☑ P1.1 Image Factory schematic `613e1592…` + OVA → vCenter template `talos-v1.13.3` (config.template=true) — evidence `docs/validation/P1.1.template.txt`
 - ☐ P1.2 terraform scaffold + Wasabi backend (`init`/`validate`)
 - ☐ P1.3 vms.tf + anti-affinity + outputs (`plan` = 6 VMs)
 - ☐ 🚦 P1.4 terraform apply (real VMs)
@@ -84,3 +85,4 @@ are in `PLAN.md §1` and the project memory.
 ## Event log (append-only)
 - (init) Ledger created. Awaiting go on P0.1.
 - P0 complete: repo scaffolded on `build`, SOPS round-trip verified, 5 checkpoint commits (`cbbbaf5`..`58b1296`). Tooling verified: terraform 1.15.5, kubectl 1.36.1, talosctl/sops/age/govc/cilium/argocd/velero present. Wasabi region us-east-1. Gate policy: maximum autonomy. Next: P1.0.
+- P1.1: Talos v1.13.3 OVA (schematic 613e1592…) imported to fs1-esxi-templates as template talos-v1.13.3 (config.template=true). Build via factory.talos.dev; vmware-amd64.ova 206 MiB.

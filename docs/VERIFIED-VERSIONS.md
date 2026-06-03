@@ -11,7 +11,7 @@
 |---|---|---|---|---|
 | Talos Linux | **v1.13.3** ✅ | GitHub releases API (latest v1.13.x) | 2026-06-03 | installed talosctl client matches |
 | Kubernetes | **v1.36.1** ✅ | `talosctl images default` (kube-apiserver/kubelet) | 2026-06-03 | etcd v3.6.11; installed kubectl 1.36.1 matches |
-| Talos Image Factory | schematic (created P1.1) ⛔ | https://factory.talos.dev | 2026-06-03 | `vmware-amd64.ova`; extensions `iscsi-tools` + `util-linux-tools` (vmware platform has open-vm-tools built in — no guest-agent ext needed) |
+| Talos Image Factory | **schematic `613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245`** ✅ | factory.talos.dev (POST /schematics) | 2026-06-03 | OVA `vmware-amd64.ova` v1.13.3 (206 MiB, HTTP 200); installer image `factory.talos.dev/installer/613e1592…961245:v1.13.3` (use in Talos `install.image`); ext `iscsi-tools` + `util-linux-tools` (vmware platform ships open-vm-tools — no guest-agent ext) |
 | Terraform | **v1.15.5** ✅ | installed | 2026-06-03 | supports S3 backend `use_lockfile` |
 | vsphere provider | **2.12.0** ✅ | registry.terraform.io/v1/providers/hashicorp/vsphere | 2026-06-03 | pin in `required_providers`; verify `vsphere_virtual_machine` + anti-affinity schema at P1.2 |
 | Gateway API CRDs | **v1.5.1** ✅ | GitHub kubernetes-sigs/gateway-api latest | 2026-06-03 | standard channel; install before Cilium gatewayAPI |
