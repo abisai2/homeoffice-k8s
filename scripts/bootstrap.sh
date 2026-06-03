@@ -48,9 +48,11 @@ set_config() { # name
   echo "  $name: guestinfo set + reset"
 }
 
+node_up() { timeout 5 talosctl --talosconfig "$TC" -n "$1" -e "$1" version >/dev/null 2>&1; }
+
 wait_api() { # ip
   local ip="$1" n=0
-  until talosctl --talosconfig "$TC" -n "$ip" -e "$ip" version --timeout 5s >/dev/null 2>&1; do
+  until node_up "$ip"; do
     n=$((n + 1)); [ "$n" -ge 90 ] && { echo "  TIMEOUT waiting on Talos API at $ip"; return 1; }
     sleep 10
   done
@@ -61,8 +63,11 @@ cmd_talos() {
   require govc; require talosctl
   [ -n "${GOVC_URL:-}" ] || { echo "ERROR: GOVC_URL unset — run: set -a; source ~/.credentials/api-tokens/vcenter-admin.creds; set +a"; exit 1; }
   ensure_rendered
-  echo ">> Injecting machine config via guestinfo + resetting nodes"
-  for nv in "${CP_NODES[@]}" "${WK_NODES[@]}"; do set_config "${nv%%:*}"; done
+  echo ">> Injecting machine config via guestinfo (skip already-up nodes) + resetting"
+  for nv in "${CP_NODES[@]}" "${WK_NODES[@]}"; do
+    nm="${nv%%:*}"; nip="${nv##*:}"
+    if node_up "$nip"; then echo "  $nm ($nip): already configured/up — skipping"; else set_config "$nm"; fi
+  done
 
   echo ">> Waiting for nodes to apply config and come up on their static IPs"
   for nv in "${CP_NODES[@]}" "${WK_NODES[@]}"; do wait_api "${nv##*:}"; done
@@ -80,7 +85,8 @@ cmd_talos() {
   done
 
   echo ">> Fetching kubeconfig -> $OUT/kubeconfig"
-  talosctl --talosconfig "$TC" -n "$VIP" -e "$BOOTSTRAP_IP" kubeconfig "$OUT/kubeconfig" --force
+  # Talos apid lives on the node (:50000), not the k8s VIP — target a CP node.
+  talosctl --talosconfig "$TC" -n "$BOOTSTRAP_IP" -e "$BOOTSTRAP_IP" kubeconfig "$OUT/kubeconfig" --force
 
   echo ">> Done. Verify:"
   echo "   talosctl --talosconfig $TC -n $BOOTSTRAP_IP etcd members   # expect 3"

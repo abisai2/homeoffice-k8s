@@ -78,7 +78,8 @@ cmd_gen() {
   # Client talosconfig: endpoints = all node IPs, default node = VIP.
   cp "$tmp/talosconfig" "$OUT/talosconfig"
   talosctl --talosconfig "$OUT/talosconfig" config endpoint "${ips[@]}"
-  talosctl --talosconfig "$OUT/talosconfig" config node "$VIP"
+  # Default node = first control plane (apid lives on nodes, NOT the k8s VIP).
+  talosctl --talosconfig "$OUT/talosconfig" config node "${ips[0]}"
   echo "  wrote $OUT/talosconfig (endpoints: ${ips[*]})"
 }
 
