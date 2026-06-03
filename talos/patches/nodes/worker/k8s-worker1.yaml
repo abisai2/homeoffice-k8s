@@ -1,0 +1,16 @@
+# Per-node: hostname, static address, default route.
+machine:
+  network:
+    hostname: k8s-worker1
+    nameservers:
+      - 172.16.10.5
+      - 172.16.10.6
+    interfaces:
+      - deviceSelector:
+          physical: true
+        dhcp: false
+        addresses:
+          - 172.16.23.34/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 172.16.23.1

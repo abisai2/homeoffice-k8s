@@ -1,0 +1,17 @@
+# Worker-only: dedicated Longhorn data disk (the second VMDK, /dev/sdb) formatted
+# and mounted at /var/lib/longhorn, bind-mounted into the kubelet. Control planes
+# have no data disk — Longhorn runs on workers only (replica-3).
+machine:
+  disks:
+    - device: /dev/sdb
+      partitions:
+        - mountpoint: /var/lib/longhorn
+  kubelet:
+    extraMounts:
+      - destination: /var/lib/longhorn
+        type: bind
+        source: /var/lib/longhorn
+        options:
+          - bind
+          - rshared
+          - rw

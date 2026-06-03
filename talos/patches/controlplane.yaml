@@ -1,0 +1,11 @@
+# Control-plane cluster-wide settings. Cilium provides the CNI and replaces
+# kube-proxy, so Talos ships neither. Control planes stay DEDICATED (tainted):
+# allowSchedulingOnControlPlanes=false (the default) keeps workloads on the
+# 3 workers — see the all-control-plane-dedicated topology ADR.
+cluster:
+  allowSchedulingOnControlPlanes: false
+  network:
+    cni:
+      name: none
+  proxy:
+    disabled: true
