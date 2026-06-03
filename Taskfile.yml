@@ -1,0 +1,76 @@
+# go-task (https://taskfile.dev) convenience targets wrapping the phased runbook.
+# Run `task` to list, `task <name>` to execute.
+version: "3"
+
+env:
+  # sops/talosctl read the age key from the operator's credential store.
+  SOPS_AGE_KEY_FILE:
+    sh: echo "${SOPS_AGE_KEY_FILE:-$HOME/.credentials/age/homeoffice-k8s.agekey}"
+  KUBECONFIG: '{{.KUBECONFIG | default "talos/clusterconfig/kubeconfig"}}'
+
+tasks:
+  default:
+    cmds: [task --list]
+    silent: true
+
+  deps:
+    desc: "Phase 0 — check required CLI tools are installed"
+    cmds: ["./scripts/bootstrap.sh check-deps"]
+
+  install-deps:
+    desc: "Phase 0 — install required tooling"
+    cmds: ["./scripts/install-prereqs.sh"]
+
+  lint:
+    desc: "Render Helm charts + manifests and validate (kubeconform) + talosctl validate"
+    cmds: ["./scripts/lint.sh"]
+
+  talos:secret:
+    desc: "Phase 2 — generate the Talos PKI/secret bundle (SOPS-encrypted)"
+    status: ["test -f talos/secrets.sops.yaml"]
+    cmds: ["./scripts/talos-gen.sh secret"]
+
+  talos:gen:
+    desc: "Phase 2 — render per-node Talos machine configs into talos/clusterconfig/"
+    cmds: ["./scripts/talos-gen.sh gen"]
+
+  infra:plan:
+    desc: "Phase 1 — terraform plan (VMs)"
+    dir: terraform
+    cmds: ["terraform plan"]
+
+  infra:up:
+    desc: "Phase 1 — terraform apply (create the 6 VMs)"
+    dir: terraform
+    cmds: ["terraform apply"]
+
+  talos:bootstrap:
+    desc: "Phase 2 — apply Talos config, bootstrap etcd, fetch kubeconfig"
+    cmds: ["./scripts/bootstrap.sh talos"]
+
+  cluster:bootstrap:
+    desc: "Phases 3-4 — install Cilium + Argo CD + KSOPS secret + root app-of-apps"
+    cmds: ["./scripts/bootstrap.sh cluster"]
+
+  cluster:status:
+    desc: "Show nodes + Cilium + Argo Applications"
+    cmds:
+      - kubectl get nodes -o wide
+      - kubectl -n kube-system exec ds/cilium -- cilium status --brief || true
+      - kubectl -n argocd get applications.argoproj.io
+
+  verify:
+    desc: "Run end-to-end verification checks"
+    cmds: ["./scripts/bootstrap.sh verify"]
+
+  shutdown:
+    desc: "Clean full-cluster shutdown for the weekly Veeam cold-backup window"
+    cmds: ["./scripts/cluster-shutdown.sh"]
+
+  startup:
+    desc: "Ordered power-on after a Veeam backup window"
+    cmds: ["./scripts/cluster-startup.sh"]
+
+  release:
+    desc: "Cut a SemVer release (bumps both pins + VERSION + CHANGELOG, commits, tags)"
+    cmds: ["./scripts/release.sh {{.CLI_ARGS}}"]
