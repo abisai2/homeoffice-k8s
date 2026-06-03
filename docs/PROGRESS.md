@@ -5,9 +5,9 @@
 > Status legend: ☐ pending · ◐ in-progress · ☑ done · ⚠ blocked.
 
 ## RESUME HERE
-- **Phase / checkpoint:** P4.x→P7 (autonomous) — author `repo-ssh.sops.yaml` + `bootstrap.sh cluster` subcommand, then `release.sh` (P5), KSOPS secret ergonomics (P6), platform stack manifests (P7). In-cluster applies (P2.3/P3.2/P4.2/P7.9) run when cluster is up.
+- **Phase / checkpoint:** ⚠ BLOCKED at **P2.3 (cluster bring-up)**. Session ended for a fresh restart — read **SESSION HANDOFF (2026-06-03)** at the bottom of this file FIRST.
 - **Branch:** `build`
-- **Last commit:** P3.0/3.1 (Cilium manifests authored + linted)
+- **Last commit:** `ddf14bf` (repo-ssh deploy-key secret)
 - **Next action:** P4.0 verify Argo chart + KSOPS repo-server wiring → P4.1 author `kubernetes/bootstrap/argocd/` + `root-app.yaml` + `platform-appset.yaml`. Then continue P5/P6/P7 authoring. Gated/in-cluster steps (P2.3, P3.2, P4.2, P7.9) run when the cluster is up.
 - **Operator-run queue:** (1) ✅ apply done — 6 VMs up. (2) **Talos bootstrap** (first run failed — GOVC_ not exported; fixed w/ guard) — run: `set -a; source ~/.credentials/api-tokens/vcenter-admin.creds; set +a; export SOPS_AGE_KEY_FILE=~/.credentials/age/homeoffice-k8s.agekey; cd /mnt/homeoffice-infra/repos/homeoffice-k8s; ./scripts/bootstrap.sh talos`
 - **TF env reminder:** export `AWS_ACCESS_KEY_ID/SECRET` from `wasabi-homeoffice-k8s.creds` (backend) and `VSPHERE_USER/PASSWORD` from `vcenter-admin.creds` (provider) before plan/apply.
@@ -44,7 +44,7 @@ permission bypasses, regardless of the in-conversation "max autonomy". Operating
 - ☑ P2.0 VERIFY talos schema (install.disk /dev/sda; allowSchedulingOnControlPlanes=false → CPs tainted; HostnameConfig strip)
 - ☑ P2.1 patches + talos-gen.sh — 6 configs `validate --mode metal` OK — evidence `docs/validation/P2.1.validate.txt`
 - ☑ P2.2 gen secrets → `talos/secrets.sops.yaml` (SOPS, homeoffice-k8s key)
-- ☐ P2.3 bootstrap — driver `scripts/bootstrap.sh talos` AUTHORED & ready (guestinfo inject → etcd bootstrap → kubeconfig). Operator-run (VLAN23 no DHCP + no vmtools → guestinfo bring-up).
+- ⚠ P2.3 bootstrap — **BLOCKER (undiagnosed).** 6 VMs guestinfo-configured + reachable on .31-.36 (`talosctl version` works), but etcd is NOT bootstrapped (no kubeconfig; `etcd members` fails) and nodes sit at console `STAGE: Booting`; VMware tools not reporting to vCenter. Root cause NOT determined — do not assume. NEXT SESSION must diagnose from the live node (`talosctl -n 172.16.23.31 services|health|dmesg|logs`) before acting. bootstrap.sh flags were fixed (74aac04) but its full outcome is unverified.
 
 ### Phase 3 — Cilium
 - ☑ P3.0 VERIFY Cilium 1.19.4 + values + CRD apiVersions (IP pool cilium.io/v2, L2 v2alpha1)
@@ -100,3 +100,38 @@ are in `PLAN.md §1` and the project memory.
 - P1.4 done (operator ran apply): 6 VMs created+powered on. P2.3 driver scripts/bootstrap.sh authored (guestinfo bring-up: VLAN23 has no DHCP and Talos maintenance mode runs no vmtools, so config is injected via guestinfo, nodes boot to static IPs .31-.36). Ready for operator to run.
 - P3.0/3.1: Cilium 1.19.4 verified (kubeProxyReplacement true, VIP .30; CRD apiVersions corrected vs reference: IP pool cilium.io/v2, L2 v2alpha1). Authored kubernetes/apps/cilium/ (kustomization+values+lb-pool .120-.139+l2policy); helm template 34 obj + kubeconform clean.
 - P4.0/4.1: Argo CD 9.5.17 + KSOPS v4.5.1 verified; authored kubernetes/bootstrap/argocd/values.yaml (KSOPS wiring), root-app.yaml (repoURL homeoffice-k8s, pin v0.1.0), platform-appset.yaml (9 components, sync-wave order). Render 53 obj + kubeconform clean.
+
+---
+
+## SESSION HANDOFF (2026-06-03) — read first on restart
+
+**Where it actually stands (facts only):**
+- Repo authored + committed on `build` through Phase 4, all lint-clean: P0 foundation; P1 Terraform
+  (6 VMs APPLIED on vCenter); P2.0-2.2 Talos machine configs + PKI (`talos/secrets.sops.yaml`); P3 Cilium
+  1.19.4; P4 Argo CD 9.5.17 + KSOPS v4.5.1 + root-app + 9-component ApplicationSet; Argo deploy-key secret.
+- **6 VMs exist and are Talos-configured via guestinfo**, reachable from mgmt01 (172.16.20.4 → 172.16.23.x
+  via .20.1) on Talos apid :50000. `talosctl version` to all of .31-.36 succeeds.
+- **etcd is NOT bootstrapped** (no kubeconfig; `etcd members` errors). cp1 console: has IP .31, gw, conn OK,
+  kubelet healthy, etcd service present, `STAGE: Booting`, uptime was ~10m when seen. VMware tools NOT
+  reporting to vCenter (`toolsNotRunning`, guest IP null) — **operator states open-vm-tools DOES ship with
+  the Talos vmware image; it is simply not running. Reason undetermined.**
+
+**OPEN ISSUE — diagnose from the live node, do NOT guess:**
+  Why are the nodes stalled at `Booting` and why is vmtoolsd not running? Determine empirically before
+  acting: `talosctl --talosconfig talos/clusterconfig/talosconfig -n 172.16.23.31 services` (etcd state?),
+  `… health`, `… dmesg | tail`, `… logs machined`. Only then decide the fix.
+
+**Mistakes made this session (do not repeat):**
+  1. Invented `talosctl version --timeout 5s` (no such flag) → bring-up wait loop failed → looked broken.
+     Fixed. Lesson saved to memory `verify-cli-flags-never-guess`: verify EVERY flag/subcommand/API against
+     `--help`/live before use, not just versions.
+  2. Then guessed the bring-up stall was "just needs etcd bootstrap" and that vmtools needed a missing
+     extension — both wrong per operator. The node state was never actually inspected. Inspect FIRST.
+
+**Gated/operator-run steps still pending:** Talos etcd bootstrap + cluster bring-up; Cilium+Argo install
+  (bootstrap.sh `cluster` subcommand NOT yet authored); release tag; PR build→main. Harness blocks
+  unattended high-severity infra + self-granted perms (see Gate policy above).
+
+**Not yet authored:** bootstrap.sh `cluster` subcommand; P5 release.sh + VERSION/CHANGELOG; P6 KSOPS
+  ergonomics; P7 stack (cert-manager, gateway, longhorn, cnpg-operator, cnpg-cluster, authentik, velero,
+  etcd-backup); P8 backup/Veeam scripts; P9 DR runbook; P10 docs/posts + PR.
