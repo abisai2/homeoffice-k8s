@@ -9,7 +9,7 @@
 - **Branch:** `build`
 - **Last commit:** P2.0/2.1/2.2 (Talos config authored + validated; PKI generated)
 - **Next action:** P3.0 — verify current Cilium chart + values keys (kubeProxyReplacement, l2announcements, gatewayAPI, LB-IPAM) via `helm show values`; then P3.1 author `kubernetes/apps/cilium/`. Also still to author: `scripts/bootstrap.sh` (Talos bring-up driver, for the operator to run at P2.3).
-- **Operator-run queue:** (1) ✅ apply done — 6 VMs up. (2) **Talos bootstrap READY** — run: `source ~/.credentials/api-tokens/vcenter-admin.creds && export SOPS_AGE_KEY_FILE=~/.credentials/age/homeoffice-k8s.agekey && cd /mnt/homeoffice-infra/repos/homeoffice-k8s && ./scripts/bootstrap.sh talos`
+- **Operator-run queue:** (1) ✅ apply done — 6 VMs up. (2) **Talos bootstrap** (first run failed — GOVC_ not exported; fixed w/ guard) — run: `set -a; source ~/.credentials/api-tokens/vcenter-admin.creds; set +a; export SOPS_AGE_KEY_FILE=~/.credentials/age/homeoffice-k8s.agekey; cd /mnt/homeoffice-infra/repos/homeoffice-k8s; ./scripts/bootstrap.sh talos`
 - **TF env reminder:** export `AWS_ACCESS_KEY_ID/SECRET` from `wasabi-homeoffice-k8s.creds` (backend) and `VSPHERE_USER/PASSWORD` from `vcenter-admin.creds` (provider) before plan/apply.
 - **Key facts:** template `talos-v1.13.3` in `/ap169home-dc/vm/Templates` (config.template=true) · schematic `613e1592…961245` · installer img `factory.talos.dev/installer/613e1592…961245:v1.13.3` · network `vds01_pg-Kubernetes` · ds `fs1-esxi-ds1` · pool `Kubernetes Pool` · folder `/vm/Kubernetes` · TF creds via `vcenter-admin.creds` (VSPHERE_USER/PASSWORD env).
 - **Verified pins:** Talos v1.13.3 · k8s v1.36.1 · vsphere 2.16.0 · Gateway API v1.5.1.

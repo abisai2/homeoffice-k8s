@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # Talos cluster bring-up driver (run AFTER `terraform apply` created the VMs).
 #
-#   source ~/.credentials/api-tokens/vcenter-admin.creds   # GOVC_* for govc
+#   set -a; source ~/.credentials/api-tokens/vcenter-admin.creds; set +a   # EXPORT GOVC_* for govc
 #   export SOPS_AGE_KEY_FILE=~/.credentials/age/homeoffice-k8s.agekey
 #   ./scripts/bootstrap.sh talos      # inject config (guestinfo) -> bootstrap etcd -> kubeconfig
+#
+# NOTE the `set -a` — the cred file is KEY=VALUE without `export`, so a plain
+# `source` would not pass GOVC_* into this child process.
 #
 # VLAN 23 has no DHCP and Talos maintenance mode runs no vmtools, so we cannot
 # reach a node before it is configured. Instead we push each node's machine config
@@ -56,6 +59,7 @@ wait_api() { # ip
 
 cmd_talos() {
   require govc; require talosctl
+  [ -n "${GOVC_URL:-}" ] || { echo "ERROR: GOVC_URL unset — run: set -a; source ~/.credentials/api-tokens/vcenter-admin.creds; set +a"; exit 1; }
   ensure_rendered
   echo ">> Injecting machine config via guestinfo + resetting nodes"
   for nv in "${CP_NODES[@]}" "${WK_NODES[@]}"; do set_config "${nv%%:*}"; done
