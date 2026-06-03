@@ -17,8 +17,8 @@
 | vsphere provider | **vmware/vsphere 2.16.0** ✅ | registry.terraform.io/v1/providers/vmware/vsphere | 2026-06-03 | provider MOVED hashicorp→vmware (hashicorp mirror stale at 2.12); init+validate OK; verify `vsphere_virtual_machine`/anti-affinity schema at P1.3 |
 | Gateway API CRDs | **v1.5.1** ✅ | GitHub kubernetes-sigs/gateway-api latest | 2026-06-03 | standard channel; install before Cilium gatewayAPI |
 | Cilium (chart) | **1.19.4** ✅ | helm repo cilium + cilium v1.19.4 source | 2026-06-03 | kubeProxyReplacement:true, k8sServiceHost=VIP .30:6443, l2announcements+gatewayAPI on; **CiliumLoadBalancerIPPool → cilium.io/v2** (promoted), **CiliumL2AnnouncementPolicy → v2alpha1**; render 34 obj + kubeconform OK |
-| Argo CD (chart) | ⛔ | https://artifacthub.io/packages/helm/argo/argo-cd | — | repo-server KSOPS init/volume keys (P4.0) |
-| KSOPS | ⛔ | https://github.com/viaduct-ai/kustomize-sops/releases | — | exec plugin image tag for repo-server (P4.0) |
+| Argo CD (chart) | **9.5.17** ✅ (app v3.4.3) | helm repo argo/argo-cd | 2026-06-03 | KSOPS repo-server wiring (initContainer + sops-age vol + SOPS_AGE_KEY_FILE); render 53 obj kubeconform OK; matches argocd CLI v3.4.3 |
+| KSOPS | **v4.5.1** ✅ | github viaduct-ai/kustomize-sops | 2026-06-03 | image `viaductoss/ksops:v4.5.1` (note viaductoss); `kustomize.buildOptions: --enable-alpha-plugins --enable-exec --enable-helm` |
 | SOPS | installed ✅ | mgmt | 2026-06-03 | round-trip verified P0.2 |
 | cert-manager (chart) | ⛔ | https://cert-manager.io/docs | — | Cloudflare DNS-01 solver; recursive NS for split-horizon (P7.1) |
 | Longhorn (chart) | ⛔ | https://longhorn.io/docs | — | **backup-target setting key**; node scheduling (P7.3) |

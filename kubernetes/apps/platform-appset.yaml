@@ -1,0 +1,50 @@
+# Platform ApplicationSet — generates one Argo CD Application per component.
+# Components are identical except name, destination namespace, and sync-wave, so
+# they are a list generator here. The git revision the cluster tracks is defined
+# exactly ONCE, in `template.spec.source.targetRevision` below — the single source
+# of truth for the platform's version. Cut a release by bumping it (and root-app's
+# matching pin) — see scripts/release.sh.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - list:
+        elements:
+          - { name: cilium,        namespace: kube-system,     syncWave: "-10" }
+          - { name: cert-manager,  namespace: cert-manager,    syncWave: "-5" }
+          - { name: gateway,       namespace: gateway,         syncWave: "0" }
+          - { name: longhorn,      namespace: longhorn-system, syncWave: "1" }
+          - { name: cnpg-operator, namespace: cnpg-system,     syncWave: "2" }
+          - { name: velero,        namespace: velero,          syncWave: "5" }
+          - { name: etcd-backup,   namespace: etcd-backup,     syncWave: "5" }
+          - { name: cnpg-cluster,  namespace: databases,       syncWave: "10" }
+          - { name: authentik,     namespace: authentik,       syncWave: "15" }
+  template:
+    metadata:
+      name: "{{ .name }}"
+      namespace: argocd
+      annotations:
+        argocd.argoproj.io/sync-wave: "{{ .syncWave }}"
+    spec:
+      project: default
+      source:
+        repoURL: "git@github.com:abisai2/homeoffice-k8s.git"   # SSH: private repo, read-only deploy key
+        # ▼▼ SINGLE SOURCE OF TRUTH for the platform's tracked version ▼▼
+        targetRevision: v0.1.0
+        # ▲▲ bump via scripts/release.sh (keeps root-app.yaml in lockstep) ▲▲
+        path: "kubernetes/apps/{{ .name }}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - ServerSideApply=true
+          - CreateNamespace=true

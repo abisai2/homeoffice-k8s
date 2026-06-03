@@ -5,7 +5,7 @@
 > Status legend: ☐ pending · ◐ in-progress · ☑ done · ⚠ blocked.
 
 ## RESUME HERE
-- **Phase / checkpoint:** P4.0 (next, autonomous) — Argo CD chart + KSOPS wiring verification. Operator step pending: **P2.3 Talos bootstrap** (command below); then P3.2 Cilium install (in cluster).
+- **Phase / checkpoint:** P4.x→P7 (autonomous) — author `repo-ssh.sops.yaml` + `bootstrap.sh cluster` subcommand, then `release.sh` (P5), KSOPS secret ergonomics (P6), platform stack manifests (P7). In-cluster applies (P2.3/P3.2/P4.2/P7.9) run when cluster is up.
 - **Branch:** `build`
 - **Last commit:** P3.0/3.1 (Cilium manifests authored + linted)
 - **Next action:** P4.0 verify Argo chart + KSOPS repo-server wiring → P4.1 author `kubernetes/bootstrap/argocd/` + `root-app.yaml` + `platform-appset.yaml`. Then continue P5/P6/P7 authoring. Gated/in-cluster steps (P2.3, P3.2, P4.2, P7.9) run when the cluster is up.
@@ -52,9 +52,9 @@ permission bypasses, regardless of the in-conversation "max autonomy". Operating
 - ☐ P3.2 install Cilium + Gateway API CRDs — GATED (in-cluster; runs as part of the operator cluster-bootstrap, needs nodes up from P2.3)
 
 ### Phase 4 — Argo CD + root app
-- ☐ P4.0 VERIFY Argo chart + KSOPS wiring
-- ☐ P4.1 bootstrap/argocd + root-app + platform-appset (lint)
-- ☐ 🚦 P4.2 apply secrets + install Argo + root-app
+- ☑ P4.0 VERIFY Argo CD 9.5.17 (app v3.4.3) + KSOPS v4.5.1 repo-server wiring
+- ☑ P4.1 bootstrap/argocd values + root-app + platform-appset (9 components) — render 53 obj + kubeconform OK — evidence `docs/validation/P4.1.lint.txt`
+- ☐ P4.2 apply secrets + install Argo + root-app — GATED (in-cluster). TODO author: `repo-ssh.sops.yaml` (deploy key) + `bootstrap.sh cluster` subcommand.
 
 ### Phase 5 — Release/tag mechanism
 - ☐ P5.1 release.sh + VERSION + CHANGELOG (SemVer-enforced)
@@ -99,3 +99,4 @@ are in `PLAN.md §1` and the project memory.
 - P2.0/2.1/2.2 (autonomous, leapfrogging blocked apply): Talos schema verified from talosctl 1.13.3; authored common/controlplane/worker + 6 node patches + scripts/talos-gen.sh; PKI generated to talos/secrets.sops.yaml (SOPS); all 6 node configs validate --mode metal OK.
 - P1.4 done (operator ran apply): 6 VMs created+powered on. P2.3 driver scripts/bootstrap.sh authored (guestinfo bring-up: VLAN23 has no DHCP and Talos maintenance mode runs no vmtools, so config is injected via guestinfo, nodes boot to static IPs .31-.36). Ready for operator to run.
 - P3.0/3.1: Cilium 1.19.4 verified (kubeProxyReplacement true, VIP .30; CRD apiVersions corrected vs reference: IP pool cilium.io/v2, L2 v2alpha1). Authored kubernetes/apps/cilium/ (kustomization+values+lb-pool .120-.139+l2policy); helm template 34 obj + kubeconform clean.
+- P4.0/4.1: Argo CD 9.5.17 + KSOPS v4.5.1 verified; authored kubernetes/bootstrap/argocd/values.yaml (KSOPS wiring), root-app.yaml (repoURL homeoffice-k8s, pin v0.1.0), platform-appset.yaml (9 components, sync-wave order). Render 53 obj + kubeconform clean.

@@ -1,0 +1,3 @@
+# P4.1 argo lint (2026-06-03T23:24:54Z)
+argo-cd 9.5.17, KSOPS v4.5.1 repo-server wiring; appset 9 components
+Summary: 55 resources found in 3 files - Valid: 50, Invalid: 0, Errors: 0, Skipped: 5
