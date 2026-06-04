@@ -1,0 +1,43 @@
+# velero chart values (12.0.2 / velero 1.18.1).
+---
+# AWS object-store plugin for Wasabi S3. Plugin v1.14.1 matches velero 1.18.x
+# (velero 1.17 -> plugin 1.13, so 1.18 -> 1.14; the upstream README matrix lags).
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.14.1
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+# Velero backs up Kubernetes RESOURCES to Wasabi. Volume DATA is covered elsewhere
+# (Longhorn -> Wasabi; CNPG -> Wasabi), so no node-agent and no volume snapshots.
+deployNodeAgent: false
+snapshotsEnabled: false
+
+credentials:
+  useSecret: true
+  existingSecret: velero-credentials      # KSOPS secret, key `cloud`
+
+configuration:
+  backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: homeoffice-k8s-backups
+      prefix: velero
+      default: true
+      config:
+        region: us-east-1
+        s3Url: https://s3.us-east-1.wasabisys.com
+        s3ForcePathStyle: "true"
+  volumeSnapshotLocation: []
+
+# Daily full-cluster resource backup (velero uses standard 5-field cron), 30-day TTL.
+schedules:
+  daily:
+    disabled: false
+    schedule: "0 3 * * *"
+    template:
+      ttl: "720h"
+      storageLocation: default
+      snapshotVolumes: false
