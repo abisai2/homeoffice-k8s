@@ -1,7 +1,9 @@
 # Applied to every node (control plane + worker). System disk + the Image Factory
-# installer image (schematic 613e1592… = iscsi-tools + util-linux-tools for Longhorn),
-# so an install/upgrade keeps the extensions the OVA template was built with.
+# installer image. Schematic a28d8637… (talos/image/schematic.yaml) = iscsi-tools +
+# util-linux-tools (Longhorn) + vmtoolsd-guest-agent (talos-vmtoolsd, so vCenter sees
+# guest IP/hostname + heartbeat + power control). An install/upgrade keeps this set.
+# Regenerate the ID from source: scripts/talos-image.sh id
 machine:
   install:
     disk: /dev/sda
-    image: factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.13.3
+    image: factory.talos.dev/installer/a28d86375cf9debe952efbcbe8e2886cf0a174b1f4dd733512600a40334977d7:v1.13.3

@@ -1,0 +1,25 @@
+# vmtoolsd-guest-agent rollout evidence (captured 2026-06-04)
+# new schematic a28d86375cf9debe952efbcbe8e2886cf0a174b1f4dd733512600a40334977d7 (v1.13.3)
+# in-place rolling talosctl upgrade of all 6 nodes; daemon = ext-talos-vmtoolsd
+
+## per-node extension + service
+172.16.23.31  ext=vmtoolsd-guest-agent v1.5.0  service=Running
+172.16.23.32  ext=vmtoolsd-guest-agent v1.5.0  service=Running
+172.16.23.33  ext=vmtoolsd-guest-agent v1.5.0  service=Running
+172.16.23.34  ext=vmtoolsd-guest-agent v1.5.0  service=Running
+172.16.23.35  ext=vmtoolsd-guest-agent v1.5.0  service=Running
+172.16.23.36  ext=vmtoolsd-guest-agent v1.5.0  service=Running
+
+## etcd members (expect 3)
+NODE           ID                 HOSTNAME   PEER URLS                   CLIENT URLS                 LEARNER
+172.16.23.31   036706f723732bfd   k8s-cp2    https://172.16.23.32:2380   https://172.16.23.32:2379   false
+172.16.23.31   4097c4b439ac1524   k8s-cp1    https://172.16.23.31:2380   https://172.16.23.31:2379   false
+172.16.23.31   c04f49d715814eee   k8s-cp3    https://172.16.23.33:2380   https://172.16.23.33:2379   false
+
+## vCenter guest tools (expect guestToolsRunning + IP/hostname)
+k8s-cp1      run=guestToolsRunning ip=172.16.23.31 host=k8s-cp1
+k8s-cp2      run=guestToolsRunning ip=172.16.23.30 host=k8s-cp2
+k8s-cp3      run=guestToolsRunning ip=172.16.23.33 host=k8s-cp3
+k8s-worker1  run=guestToolsRunning ip=172.16.23.34 host=k8s-worker1
+k8s-worker2  run=guestToolsRunning ip=172.16.23.35 host=k8s-worker2
+k8s-worker3  run=guestToolsRunning ip=172.16.23.36 host=k8s-worker3
