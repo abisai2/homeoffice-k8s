@@ -23,6 +23,9 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
   hook (`upgradeCRDs: false`). The chart ships CRDs in `crds/` (excluded by kustomize-helm by
   default), so the `BackupStorageLocation`/`Schedule` CRs failed pre-sync dry-run ("CRD not
   found") and aborted the whole sync before the pre-install hook could create them.
+- longhorn: label the `longhorn-system` namespace `pod-security.kubernetes.io/enforce:
+  privileged`. Talos enforces `baseline` PSS on all non-kube-system namespaces, which rejects
+  the privileged, host-path `longhorn-manager` DaemonSet. Added an explicit Namespace manifest.
 
 ## [0.1.0] - 2026-06-04
 

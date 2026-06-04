@@ -8,6 +8,7 @@ helmCharts:
     namespace: longhorn-system
     valuesFile: values.yaml
 resources:
+  - namespace.yaml          # longhorn-system w/ privileged PSS label (Talos enforces baseline)
   - storageclass-replica1.yaml
 # Wasabi S3 backup credential (longhorn-system) — see secret.example.yaml.
 generators:
