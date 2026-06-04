@@ -1,0 +1,19 @@
+# Longhorn chart values (v1.12.0).
+---
+# Workers-only: control planes carry node-role.kubernetes.io/control-plane:NoSchedule
+# and Longhorn adds NO toleration for it, so every Longhorn component runs on workers
+# only — where the dedicated /dev/sdb data disk is mounted at /var/lib/longhorn
+# (see talos/patches/worker.yaml). Control planes have no data disk.
+persistence:
+  defaultClass: true
+  # Default StorageClass `longhorn` = 3 replicas (one per worker; strict anti-affinity
+  # by default keeps replicas on distinct nodes). For replica-1, use `longhorn-r1`.
+  defaultClassReplicaCount: 3
+  reclaimPolicy: Delete
+
+defaultSettings:
+  # Backup to Wasabi S3 (same account as the Terraform state backend). The trailing
+  # slash is REQUIRED; the `longhorn/` subpath separates these from velero/etcd backups
+  # in the shared homeoffice-k8s-backups bucket. Credentials via the KSOPS secret below.
+  backupTarget: s3://homeoffice-k8s-backups@us-east-1/longhorn/
+  backupTargetCredentialSecret: longhorn-backup-credential

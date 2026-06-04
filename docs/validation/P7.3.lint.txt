@@ -1,0 +1,30 @@
+# P7.3 longhorn lint (2026-06-04)
+chart longhorn/longhorn v1.12.0 (appVersion v1.12.0; kubeVersion >=1.25.0-0 -> supports k8s 1.36).
+Talos extensions present in the node image: iscsi-tools + util-linux-tools (schematic a28d8637...).
+
+Workers-only: control planes carry node-role.kubernetes.io/control-plane:NoSchedule (verified live)
+and Longhorn adds no toleration -> all components run on workers, where /dev/sdb is mounted at
+/var/lib/longhorn (talos/patches/worker.yaml). Confirmed live: cp1/2/3 tainted, worker1/2/3 untainted.
+
+Render: kustomize build --enable-alpha-plugins --enable-exec --enable-helm kubernetes/apps/longhorn -> 47 docs
+  (23 CRD, Deployments/Services/SAs/Jobs/ConfigMaps, 1 StorageClass, 1 KSOPS Secret).
+
+StorageClasses:
+  - default `longhorn` (via longhorn-storageclass ConfigMap, applied at runtime):
+      is-default-class=true, numberOfReplicas="3"  (replica-3 default) -- verified via helm template.
+  - `longhorn-r1` (this app's StorageClass object): numberOfReplicas="1", default=false.
+
+Backup target (Wasabi S3): defaultSettings.backupTarget=s3://homeoffice-k8s-backups@us-east-1/longhorn/
+  + backupTargetCredentialSecret=longhorn-backup-credential (KSOPS-decrypted into longhorn-system;
+  keys AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_ENDPOINTS=https://s3.us-east-1.wasabisys.com).
+
+kubeconform -kubernetes-version 1.36.1 -ignore-missing-schemas -summary:
+  Summary: 47 resources found in 1 file - Valid: 24, Invalid: 0, Errors: 0, Skipped: 23 (CRDs)
+Server-side dry-run (read-only): storageclass.storage.k8s.io/longhorn-r1 created (server dry run).
+
+No .Capabilities-gated objects we need (only PSP validation templates, unused).
+
+OPERATOR INPUT before P7.9: real Wasabi backup keys ->
+  task sops:edit -- kubernetes/apps/longhorn/secret.sops.yaml
+  (use the homeoffice-k8s Wasabi account; bucket homeoffice-k8s-backups, region us-east-1).
+NOTE: recurring snapshot/backup SCHEDULES are deferred to P8 (backup wiring); P7.3 only wires the target.
