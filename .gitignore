@@ -27,6 +27,8 @@ crash.log
 # Tooling caches
 .cache/
 *.log
+# kustomize `--enable-helm` pulls charts into a sibling charts/ cache (regenerated each render)
+kubernetes/apps/*/charts/
 
 # Local Claude settings (per-machine)
 .claude/settings.local.json
