@@ -1,0 +1,16 @@
+# P7.4 cnpg-operator lint (2026-06-04)
+chart cnpg/cloudnative-pg 0.28.2 (operator appVersion 1.29.1; kubeVersion >=1.29.0-0 -> supports 1.36).
+Cluster API group/version: postgresql.cnpg.io/v1 (CRD clusters.postgresql.cnpg.io) -> used by P7.5.
+
+values: crds.create=true; monitoring.podMonitorEnabled=false (no Prometheus Operator CRDs yet).
+No .Capabilities-gated objects; monitoring is value-gated off.
+
+Render: kustomize build --enable-helm kubernetes/apps/cnpg-operator -> 21 docs
+  10 CRD (incl. clusters.postgresql.cnpg.io, clusterimagecatalogs...), 1 Deployment
+  (cnpg-system/cnpg-cloudnative-pg), Mutating/ValidatingWebhookConfiguration, RBAC, SA, Service, ConfigMaps.
+
+kubeconform -kubernetes-version 1.36.1 -ignore-missing-schemas -summary:
+  Summary: 21 resources found in 1 file - Valid: 11, Invalid: 0, Errors: 0, Skipped: 10 (CRDs)
+  (Deployment, webhooks, RBAC, SA, Service, ConfigMaps all schema-VALID.)
+
+Operator only; the 3-instance HA Cluster (namespace databases) is P7.5.
