@@ -121,10 +121,16 @@ cmd_cluster() {
 
   echo "== P3.2: Gateway API CRDs + Cilium =="
 
-  echo ">> Gateway API $GWAPI_VER (standard channel) CRDs — required before Cilium gatewayAPI starts"
+  echo ">> Gateway API $GWAPI_VER CRDs (standard + experimental TLSRoute) — must precede Cilium gatewayAPI"
   kubectl apply --server-side \
     -f "https://github.com/kubernetes-sigs/gateway-api/releases/download/$GWAPI_VER/standard-install.yaml"
-  for c in gatewayclasses gateways httproutes grpcroutes referencegrants; do
+  # cilium-operator 1.19 registers v1alpha2.TLSRoute in its scheme + watches it unconditionally;
+  # without this experimental CRD present AT OPERATOR STARTUP it error-loops on every gateway
+  # reconcile. Applied here (before Cilium) so a fresh run never hits that. Upstream lists it
+  # under the Cilium Gateway API prerequisites (experimental channel).
+  kubectl apply --server-side \
+    -f "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/$GWAPI_VER/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml"
+  for c in gatewayclasses gateways httproutes grpcroutes referencegrants tlsroutes; do
     wait_crd "$c.gateway.networking.k8s.io"
   done
 

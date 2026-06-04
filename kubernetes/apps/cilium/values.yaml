@@ -32,6 +32,12 @@ loadBalancer:
 # Gateway API CRDs to be installed in the cluster first (see bootstrap).
 gatewayAPI:
   enabled: true
+  # kustomize/Argo render OFFLINE; the chart default `gatewayClass.create: auto` only emits
+  # the GatewayClass when the LIVE cluster already has the API (.Capabilities check), so an
+  # offline render silently drops it. Force it on so the 'cilium' GatewayClass is always
+  # rendered and applied (needed by the Gateway at P7.2).
+  gatewayClass:
+    create: "true"
 
 operator:
   replicas: 2

@@ -1,0 +1,62 @@
+# P3.2 — Cilium + Gateway API CRDs (operator ran ./scripts/bootstrap.sh cluster) — verified 2026-06-04T14:13:31Z
+
+## nodes (expect 6 Ready)
+NAME          STATUS   ROLES           AGE   VERSION   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE          KERNEL-VERSION          CONTAINER-RUNTIME
+k8s-cp1       Ready    control-plane   11h   v1.36.1   172.16.23.31   <none>        Talos (v1.13.3)   6.18.33-talos (amd64)   containerd://2.2.4
+k8s-cp2       Ready    control-plane   11h   v1.36.1   172.16.23.32   <none>        Talos (v1.13.3)   6.18.33-talos (amd64)   containerd://2.2.4
+k8s-cp3       Ready    control-plane   11h   v1.36.1   172.16.23.33   <none>        Talos (v1.13.3)   6.18.33-talos (amd64)   containerd://2.2.4
+k8s-worker1   Ready    <none>          11h   v1.36.1   172.16.23.34   <none>        Talos (v1.13.3)   6.18.33-talos (amd64)   containerd://2.2.4
+k8s-worker2   Ready    <none>          11h   v1.36.1   172.16.23.35   <none>        Talos (v1.13.3)   6.18.33-talos (amd64)   containerd://2.2.4
+k8s-worker3   Ready    <none>          11h   v1.36.1   172.16.23.36   <none>        Talos (v1.13.3)   6.18.33-talos (amd64)   containerd://2.2.4
+
+## cilium DaemonSet (6/6 Running)
+NAME           READY   STATUS    RESTARTS   AGE
+cilium-8b89v   1/1     Running   0          12m
+cilium-8l8lg   1/1     Running   0          12m
+cilium-bztsw   1/1     Running   0          12m
+cilium-c8dzw   1/1     Running   0          12m
+cilium-qxrwq   1/1     Running   0          12m
+cilium-s5dsd   1/1     Running   0          12m
+
+## cilium-operator (2/2)
+NAME              READY   UP-TO-DATE   AVAILABLE   AGE
+cilium-operator   2/2     2            2           12m
+
+## CiliumLoadBalancerIPPool (.120-.139)
+spec:
+  blocks:
+  - start: 172.16.23.120
+    stop: 172.16.23.139
+  disabled: false
+status:
+
+## CiliumL2AnnouncementPolicy
+NAME         AGE
+default-l2   11m
+
+## Gateway API CRDs (v1.4.1 standard channel)
+backendtlspolicies.gateway.networking.k8s.io   2026-06-04T14:00:47Z
+gatewayclasses.gateway.networking.k8s.io       2026-06-04T14:00:48Z
+gateways.gateway.networking.k8s.io             2026-06-04T14:00:48Z
+grpcroutes.gateway.networking.k8s.io           2026-06-04T14:00:48Z
+httproutes.gateway.networking.k8s.io           2026-06-04T14:00:48Z
+referencegrants.gateway.networking.k8s.io      2026-06-04T14:00:48Z
+
+## KNOWN-PENDING (one-time live fix, operator-gated): experimental TLSRoute CRD + cilium GatewayClass.
+## cilium-operator error-loops on v1alpha2.TLSRouteList (CRD absent at this run's operator startup);
+## GatewayClass 'cilium' absent because offline kustomize render dropped it (gatewayClass.create:auto).
+## Both fixed in IaC (values.yaml gatewayClass.create:true; bootstrap.sh applies experimental TLSRoute).
+## Live fix: kubectl apply <tlsroutes experimental CRD> ; rollout restart deploy/cilium-operator ;
+##           kustomize build --enable-helm kubernetes/apps/cilium | kubectl apply --server-side -f -
+## Fresh rebuilds via the fixed script need NO restart (CRDs precede Cilium).
+
+## current gatewayclass state (expected empty until live fix):
+
+## ----- live gateway-api catch-up APPLIED 2026-06-04T14:22:30Z (resolves the KNOWN-PENDING above) -----
+## tlsroutes CRD:
+tlsroutes.gateway.networking.k8s.io  bundle=v1.4.1
+## GatewayClass:
+NAME     CONTROLLER                     ACCEPTED   AGE
+cilium   io.cilium/gateway-controller   True       3m22s
+Accepted=True (Accepted)
+## cilium-operator: 2/2 ready ; TLSRoute-scheme errors in current logs: 0
