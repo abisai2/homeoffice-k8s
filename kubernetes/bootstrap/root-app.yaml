@@ -7,10 +7,6 @@
 # Versioning: this is the TOP-LEVEL pin. Keep it in lockstep with the
 # ApplicationSet's targetRevision — bump both via scripts/release.sh, then
 # advance the live cluster with `argocd app set root --revision vX.Y.Z`.
-#
-# BRING-UP (temporary): tracking the `build` branch so platform fixes auto-sync
-# without a tag per iteration. Lock back to an immutable tag (cut v0.1.1) once all
-# components are Synced/Healthy. Keep this in lockstep with platform-appset.yaml.
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -23,7 +19,7 @@ spec:
   project: default
   source:
     repoURL: "git@github.com:abisai2/homeoffice-k8s.git"   # SSH: private repo, read-only deploy key (secret repo-homeoffice-k8s)
-    targetRevision: build          # BRING-UP: branch-tracking; lock to vX.Y.Z when green
+    targetRevision: v0.1.1
     path: kubernetes/apps
     directory:
       recurse: false
