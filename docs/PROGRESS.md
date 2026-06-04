@@ -5,10 +5,10 @@
 > Status legend: ☐ pending · ◐ in-progress · ☑ done · ⚠ blocked.
 
 ## RESUME HERE
-- **Phase / checkpoint:** ⚠ BLOCKED at **P2.3 (etcd bootstrap)**. Live state re-confirmed 2026-06-03 (6 VMs up, Talos v1.13.3 reachable on .31–.36, etcd NOT bootstrapped). Read **SESSION HANDOFF (2026-06-03)** at the bottom FIRST, then **Next action** below.
+- **Phase / checkpoint:** ⚠ BLOCKED at **P2.3 (etcd bootstrap)** — but now **DIAGNOSED (2026-06-03)**. Root cause: **etcd was never bootstrapped** (`talosctl bootstrap` never ran). All 6 VMs up + Talos v1.13.3 reachable + cluster discovery healthy; the only missing step is the one-time bootstrap. See **P2.3 DIAGNOSIS (2026-06-03)** at the bottom, then **Next action** below.
 - **Branch:** `build`
 - **Last commit:** checkpoint — removed dedicated RP + DRS anti-affinity from TF **config** + doc corrections (live infra untouched). Run `git log --oneline -5` for the hash.
-- **Next action:** ⚠ **Diagnose P2.3 first** — from the live node, determine *why* etcd won't bootstrap **before changing anything** (do NOT guess — see SESSION HANDOFF lesson): `talosctl --talosconfig talos/clusterconfig/talosconfig -n 172.16.23.31 services` · `health` · `dmesg` · `logs etcd` · `logs machined`. Then bootstrap etcd on cp1 → fetch kubeconfig (P2.3 exit-verify). After the cluster is up: author the `bootstrap.sh cluster` subcommand → P3.2/P4.2 in-cluster installs → P5–P10.
+- **Next action:** ✅ Diagnosis done (root cause = never bootstrapped). **Operator-run, gated, ONCE on cp1 only** (multiple = etcd split-brain): `cd /mnt/homeoffice-infra/repos/homeoffice-k8s && talosctl --talosconfig talos/clusterconfig/talosconfig -n 172.16.23.31 -e 172.16.23.31 bootstrap`. Then verify P2.3 exit: `talosctl --talosconfig talos/clusterconfig/talosconfig -n 172.16.23.31 -e 172.16.23.31 etcd members` = 3 and `talosctl … -n 172.16.23.31 -e 172.16.23.31 kubeconfig talos/clusterconfig/kubeconfig --force` then `KUBECONFIG=talos/clusterconfig/kubeconfig kubectl get nodes` = 6 (NotReady, no CNI yet). After the cluster is up: author the `bootstrap.sh cluster` subcommand → P3.2/P4.2 in-cluster installs → P5–P10.
 - **Operator-run queue:** (1) ✅ apply done — 6 VMs up. (2) **Talos bootstrap** (first run failed — GOVC_ not exported; fixed w/ guard) — run: `set -a; source ~/.credentials/api-tokens/vcenter-admin.creds; set +a; export SOPS_AGE_KEY_FILE=~/.credentials/age/homeoffice-k8s.agekey; cd /mnt/homeoffice-infra/repos/homeoffice-k8s; ./scripts/bootstrap.sh talos`
 - **TF env reminder:** export `AWS_ACCESS_KEY_ID/SECRET` from `wasabi-homeoffice-k8s.creds` (backend) and `VSPHERE_USER/PASSWORD` from `vcenter-admin.creds` (provider) before plan/apply.
 - **Key facts:** template `talos-v1.13.3` in `/ap169home-dc/vm/Templates` (config.template=true) · schematic `613e1592…961245` · installer img `factory.talos.dev/installer/613e1592…961245:v1.13.3` · network `vds01_pg-Kubernetes` · ds `fs1-esxi-ds1` · cluster root pool (no dedicated RP) · folder `/vm/Kubernetes` · TF creds via `vcenter-admin.creds` (VSPHERE_USER/PASSWORD env).
@@ -44,7 +44,7 @@ permission bypasses, regardless of the in-conversation "max autonomy". Operating
 - ☑ P2.0 VERIFY talos schema (install.disk /dev/sda; allowSchedulingOnControlPlanes=false → CPs tainted; HostnameConfig strip)
 - ☑ P2.1 patches + talos-gen.sh — 6 configs `validate --mode metal` OK — evidence `docs/validation/P2.1.validate.txt`
 - ☑ P2.2 gen secrets → `talos/secrets.sops.yaml` (SOPS, homeoffice-k8s key)
-- ⚠ P2.3 bootstrap — **BLOCKER (undiagnosed).** 6 VMs guestinfo-configured + reachable on .31-.36 (`talosctl version` works), but etcd is NOT bootstrapped (no kubeconfig; `etcd members` fails) and nodes sit at console `STAGE: Booting`; VMware tools not reporting to vCenter. Root cause NOT determined — do not assume. NEXT SESSION must diagnose from the live node (`talosctl -n 172.16.23.31 services|health|dmesg|logs`) before acting. bootstrap.sh flags were fixed (74aac04) but its full outcome is unverified.
+- ⚠ P2.3 bootstrap — **DIAGNOSED 2026-06-03; awaiting operator bootstrap (the only remaining step).** Root cause: **etcd was never bootstrapped** — `talosctl bootstrap` never ran (bootstrap.sh aborts at its `GOVC_URL` guard `scripts/bootstrap.sh:64` *before* the bootstrap call at `:76`; guestinfo config injection had already succeeded out-of-band, so the nodes are configured + discovered, just not initialized). Evidence (all live, read-only, 2026-06-03): all 3 CP nodes' etcd service = `Failed: failed to build initial etcd cluster: failed to build cluster arguments: …timeout`; `/var/lib/etcd` **empty** on cp1/cp2/cp3 (no `member/` dir → never initialized); cluster discovery healthy (all 6 members registered via discovery.talos.dev); DNS OK (172.16.10.5/.6); `EtcdSpec` valid (advertised .31, image registry.k8s.io/etcd:v3.6.11); VIP .30 unclaimed. **Why this error = not-bootstrapped (verified vs Talos v1.13.3 `etcd.go`, not guessed):** that message is emitted only by `buildInitialCluster` (the *join* path, reached when the node's `Bootstrap` flag is false); it dials existing members' etcd via `NewClientFromControlPlaneIPs()` and hits `EtcdJoinTimeout`. The bootstrapped/init path (`argsForInit`, `initial-cluster-state: "new"`) makes no network calls and cannot produce this. All 3 CP are in the join path → deadlock (everyone joins, nobody inits). The prior session's "STAGE: Booting / vmtools / no route to .30:6443" notes were **downstream symptoms / red herrings** (no apiserver+VIP until etcd is up). Fix: run `talosctl bootstrap` once on cp1 (see Next action).
 
 ### Phase 3 — Cilium
 - ☑ P3.0 VERIFY Cilium 1.19.4 + values + CRD apiVersions (IP pool cilium.io/v2, L2 v2alpha1)
@@ -101,6 +101,7 @@ are in `PLAN.md §1` and the project memory.
 - P3.0/3.1: Cilium 1.19.4 verified (kubeProxyReplacement true, VIP .30; CRD apiVersions corrected vs reference: IP pool cilium.io/v2, L2 v2alpha1). Authored kubernetes/apps/cilium/ (kustomization+values+lb-pool .120-.139+l2policy); helm template 34 obj + kubeconform clean.
 - P4.0/4.1: Argo CD 9.5.17 + KSOPS v4.5.1 verified; authored kubernetes/bootstrap/argocd/values.yaml (KSOPS wiring), root-app.yaml (repoURL homeoffice-k8s, pin v0.1.0), platform-appset.yaml (9 components, sync-wave order). Render 53 obj + kubeconform clean.
 - 2026-06-03 (operator decision): removed the dedicated resource pool + DRS anti-affinity from the Terraform **config**. `anti-affinity.tf` deleted; VMs now reference the cluster **root** pool (`data.vsphere_compute_cluster.cluster.resource_pool_id`); `vsphere_resource_pool` var/data-source/tfvars dropped; `hashicorp/vsphere`→`vmware/vsphere` doc drift fixed. Verified: `validate` OK; `plan` (read-only creds) = **6 VMs update in-place** (`resource_pool_id` resgroup-2042 *Kubernetes Pool* → resgroup-2002 *root*), **0 destroy, no recreate**. **Live infra unchanged — apply is operator-gated.** Findings: (a) apply reparents the 6 VMs pool→root in-place (non-disruptive); (b) the 2 live DRS rules are **NOT destroyed** by apply (plan = 0 delete; Terraform did not propose removing the config-orphaned rules) — they remain in vCenter, consistent with "keep what we have". To also drop them from TF **state** (live rules kept), run `terraform state rm vsphere_compute_cluster_vm_anti_affinity_rule.control_plane vsphere_compute_cluster_vm_anti_affinity_rule.workers`.
+- 2026-06-03 (P2.3 diagnosis — root cause found, no live changes made): Inspected all 3 CP nodes from mgmt01 (read-only talosctl). **etcd was never bootstrapped** — `talosctl bootstrap` never ran. All 3 CP etcd services `Failed: failed to build initial etcd cluster: failed to build cluster arguments: timeout`; `/var/lib/etcd` empty on all 3; cluster discovery + DNS healthy (all 6 members registered, resolvers 172.16.10.5/.6); `EtcdSpec` valid; VIP .30 unclaimed; no IP collisions on .30–.36. Confirmed against Talos v1.13.3 `etcd.go`: that error is the *join* path (`buildInitialCluster`, `Bootstrap=false`) timing out dialing nonexistent member etcd — the init path makes no net calls and can't emit it. **Operator-fact correction this session:** VLAN23 is **NOT** isolated — it has full internet, DNS, and DHCP, and another k8s cluster is now live on it. This killed the earlier (wrong) "no-egress → discovery timeout" hypothesis (discovery in fact succeeds). DHCP presence explains the transient phantom `.238` lease seen on cp1 (not current, harmless). **Recommend:** confirm the VLAN23 DHCP scope excludes .30–.36 so future leases can't collide with our statics/VIP. **Fix (operator-gated, once, cp1 only):** `talosctl --talosconfig talos/clusterconfig/talosconfig -n 172.16.23.31 -e 172.16.23.31 bootstrap`.
 
 ---
 
@@ -117,10 +118,10 @@ are in `PLAN.md §1` and the project memory.
   reporting to vCenter (`toolsNotRunning`, guest IP null) — **operator states open-vm-tools DOES ship with
   the Talos vmware image; it is simply not running. Reason undetermined.**
 
-**OPEN ISSUE — diagnose from the live node, do NOT guess:**
-  Why are the nodes stalled at `Booting` and why is vmtoolsd not running? Determine empirically before
-  acting: `talosctl --talosconfig talos/clusterconfig/talosconfig -n 172.16.23.31 services` (etcd state?),
-  `… health`, `… dmesg | tail`, `… logs machined`. Only then decide the fix.
+**OPEN ISSUE — ✅ RESOLVED 2026-06-03 (see "P2.3 DIAGNOSIS" section below).**
+  The "stalled at `Booting`" / vmtoolsd framing was a red herring: the nodes are healthy and Talos-reachable;
+  there is simply **no apiserver/VIP because etcd was never bootstrapped**. Root cause and fix are in the
+  P2.3 DIAGNOSIS section at the very bottom of this file. (Original investigation notes kept below for history.)
 
 **Mistakes made this session (do not repeat):**
   1. Invented `talosctl version --timeout 5s` (no such flag) → bring-up wait loop failed → looked broken.
@@ -136,3 +137,56 @@ are in `PLAN.md §1` and the project memory.
 **Not yet authored:** bootstrap.sh `cluster` subcommand; P5 release.sh + VERSION/CHANGELOG; P6 KSOPS
   ergonomics; P7 stack (cert-manager, gateway, longhorn, cnpg-operator, cnpg-cluster, authentik, velero,
   etcd-backup); P8 backup/Veeam scripts; P9 DR runbook; P10 docs/posts + PR.
+
+---
+
+## P2.3 DIAGNOSIS (2026-06-03) — read for the etcd blocker
+
+**Verdict: etcd was never bootstrapped.** Not a network, DNS, vmtools, or "stalled boot" issue. The single
+missing step is the one-time `talosctl bootstrap`. Everything else (VMs, Talos config, networking, discovery)
+is healthy.
+
+**Method:** read-only `talosctl` from mgmt01 (172.16.20.4) against the live nodes. talosctl client v1.13.3
+matches the OS. (Note: for pre-cluster nodes, pin endpoint==node, e.g. `-n 172.16.23.31 -e 172.16.23.31`, or
+copy the talosconfig and `config endpoint/node` to a single IP — round-robin across all 6 endpoints otherwise
+hits "no request forwarding" because apid can't forward before the cluster exists.)
+
+**Evidence (live):**
+- All 6 nodes: Talos API up, v1.13.3.
+- All 3 control planes: `talosctl service etcd` = `Failed` — `Failed to run pre stage: failed to build initial
+  etcd cluster: failed to build cluster arguments: 1 error(s) occurred: timeout`. Sat ~30 min in "Preparing"
+  before failing (= `EtcdJoinTimeout` with retries).
+- `talosctl ls /var/lib/etcd` = empty on cp1/cp2/cp3 (no `member/` dir) → etcd never initialized anywhere.
+- `get members` = all 6 registered via discovery.talos.dev; `get discoveryconfig` `registryServiceEnabled:true`
+  (default) and it succeeds → discovery + internet egress + DNS (172.16.10.5/.6) all WORK.
+- `get etcdspec` valid: `advertisedAddresses:[172.16.23.31]`, `image registry.k8s.io/etcd:v3.6.11`.
+- VIP .30 unclaimed (ping fails — correct; it only comes up after etcd). No IP collision on .30–.36.
+
+**Root-cause mechanism (verified against Talos v1.13.3 `internal/app/machined/pkg/system/services/etcd.go`,
+not guessed):** the string "failed to build cluster arguments" is emitted only by `buildInitialCluster`, the
+etcd **join** path, reached from `argsForControlPlane` when the node's `Bootstrap` flag is **false**. It dials
+the *existing* members' etcd via `etcd.NewClientFromControlPlaneIPs()` to add itself as a learner, and times
+out (`constants.EtcdJoinTimeout`) because no node has a running etcd. The **init** path (`argsForInit`,
+`initial-cluster-state:"new"`) makes no network calls and cannot emit this error. All 3 CP nodes are therefore
+in the join path → deadlock: every node waits to join, none initializes.
+
+**Why it was never bootstrapped:** `scripts/bootstrap.sh` aborts at its `GOVC_URL` guard (`:64`) *before* the
+`talosctl … bootstrap` call (`:76`). The guestinfo config injection had already happened out-of-band (nodes are
+configured + discovered), but the bootstrap call never ran.
+
+**Operator-fact correction (this session):** VLAN23 is **NOT** isolated — full internet + DNS + DHCP, and a
+second k8s cluster is now live on it. This invalidated the earlier "no egress → discovery timeout" theory.
+DHCP explains the transient phantom `172.16.23.238` lease once seen on cp1 (not current, harmless).
+**Recommend:** confirm the VLAN23 DHCP scope excludes .30–.36 to avoid future lease/static/VIP collisions.
+
+**FIX — operator-gated, run ONCE, on cp1 (.31) only** (multiple bootstraps ⇒ etcd split-brain):
+```bash
+cd /mnt/homeoffice-infra/repos/homeoffice-k8s
+talosctl --talosconfig talos/clusterconfig/talosconfig -n 172.16.23.31 -e 172.16.23.31 bootstrap
+```
+**P2.3 exit-verify** (after cp1 inits etcd → apiserver on VIP → cp2/cp3 join):
+```bash
+talosctl --talosconfig talos/clusterconfig/talosconfig -n 172.16.23.31 -e 172.16.23.31 etcd members   # = 3
+talosctl --talosconfig talos/clusterconfig/talosconfig -n 172.16.23.31 -e 172.16.23.31 kubeconfig talos/clusterconfig/kubeconfig --force
+KUBECONFIG=talos/clusterconfig/kubeconfig kubectl get nodes                                            # = 6 (NotReady, no CNI)
+```
