@@ -5,6 +5,7 @@ resources:
   - cluster.yaml
   - objectstore.yaml
   - scheduledbackup.yaml
+  - database-authentik.yaml
 # Wasabi S3 backup credential (databases ns) — see secret.example.yaml.
 generators:
   - secret-generator.yaml

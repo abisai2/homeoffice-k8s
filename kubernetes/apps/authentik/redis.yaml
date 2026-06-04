@@ -1,0 +1,43 @@
+# Minimal Redis for authentik (cache + task broker only — no persistent app data, so
+# no PVC; a restart just drops cache/queued tasks). Single replica.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentik-redis
+  labels:
+    app.kubernetes.io/name: authentik-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: authentik-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: authentik-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          args: ["--save", "", "--appendonly", "no"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authentik-redis
+spec:
+  selector:
+    app.kubernetes.io/name: authentik-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis

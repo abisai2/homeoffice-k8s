@@ -1,0 +1,11 @@
+# Declarative `authentik` database in the postgres cluster, owned by the managed
+# `authentik` role (cluster.yaml). Used by the authentik IdP (P7.6).
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: authentik
+spec:
+  cluster:
+    name: postgres
+  name: authentik
+  owner: authentik

@@ -1,0 +1,32 @@
+# P7.6 authentik lint (2026-06-04)
+chart authentik/authentik 2026.5.2. Operator decisions: CNPG managed role + Database CRD
+(modifies the P7.5 cnpg-cluster); minimal self-hosted Redis.
+
+== cnpg-cluster (MODIFIED for authentik's DB) ==
+Re-render 6 docs: Cluster/postgres now has spec.managed.roles[authentik] (login=true,
+passwordSecret=authentik-db-role); Database/authentik (owner authentik); + KSOPS
+Secret/authentik-db-role (basic-auth, databases ns). kubeconform Valid 2 / Skipped 4 / Invalid 0.
+
+== authentik (ns authentik) ==
+Render (helm + KSOPS) 14 docs: server+worker+redis Deployments, server+redis Services,
+chart `authentik` Secret + KSOPS `authentik-secrets`, media PVC, HTTPRoute, RBAC.
+  - External CNPG: postgresql.enabled=false; authentik.postgresql host
+    postgres-rw.databases.svc.cluster.local, db/user authentik, port 5432.
+  - Secrets: AUTHENTIK_SECRET_KEY + AUTHENTIK_POSTGRESQL__PASSWORD injected via
+    global.envFrom -> authentik-secrets. VERIFIED both server AND worker render
+    `envFrom: [authentik, authentik-secrets]` (later overrides the chart's empty values).
+  - Redis: self-hosted redis:7.4-alpine Deployment/Service `authentik-redis` (no persistence);
+    authentik.redis.host=authentik-redis.
+  - Ingress: chart ingress disabled; HTTPRoute `authentik` -> Gateway main (gateway ns,
+    https listener, from:All) host authentik.k8s-talos1.ap169homeoffice.net -> authentik-server:80.
+  - Media: PVC authentik-media RWX (longhorn replica-3) mounted /media on server + worker.
+kubeconform 1.36.1: Valid 13 / Invalid 0 / Skipped 1 (HTTPRoute). No .Capabilities gates.
+
+OPERATOR before P7.9:
+  - Set the SAME password in BOTH (cross-namespace coordination):
+      task sops:edit -- kubernetes/apps/cnpg-cluster/secret-authentik-role.sops.yaml   (password)
+      task sops:edit -- kubernetes/apps/authentik/secret.sops.yaml                      (AUTHENTIK_POSTGRESQL__PASSWORD)
+  - AUTHENTIK_SECRET_KEY: openssl rand -base64 60 (in authentik/secret.sops.yaml).
+  - Optional: add AUTHENTIK_BOOTSTRAP_PASSWORD/_EMAIL to authentik-secrets for the initial akadmin.
+NOTE: Longhorn RWX (media) uses the share-manager (NFS) — verify it works on Talos at P7.9; else
+switch to RWO server-only or emptyDir. CNPG CRs not server-dry-runnable (CRDs not live) -> webhook is final check.

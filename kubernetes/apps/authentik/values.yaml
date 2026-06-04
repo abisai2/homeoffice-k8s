@@ -1,0 +1,48 @@
+# authentik chart values (2026.5.2).
+---
+global:
+  # Inject the two SECRET env vars (AUTHENTIK_SECRET_KEY + AUTHENTIK_POSTGRESQL__PASSWORD)
+  # from the KSOPS secret. global.envFrom is appended AFTER the chart-generated secret on
+  # both server and worker, so these override the empty values below.
+  envFrom:
+    - secretRef:
+        name: authentik-secrets
+
+# Disable the chart's bundled PostgreSQL — we use the external CNPG cluster.
+postgresql:
+  enabled: false
+
+authentik:
+  # secret_key + postgresql.password come from authentik-secrets (global.envFrom) — kept
+  # empty here so they are not committed in plaintext.
+  secret_key: ""
+  postgresql:
+    host: postgres-rw.databases.svc.cluster.local
+    name: authentik
+    user: authentik
+    password: ""
+    port: 5432
+  # External Redis (self-hosted, redis.yaml). authentik uses it only as cache/broker.
+  redis:
+    host: authentik-redis
+
+# Media (uploaded branding, worker downloads) on a shared Longhorn RWX volume so the
+# server and worker (spread across workers) both read/write it. PVC in media-pvc.yaml.
+server:
+  ingress:
+    enabled: false        # ingress handled by the Cilium Gateway HTTPRoute (httproute.yaml)
+  volumes:
+    - name: media
+      persistentVolumeClaim:
+        claimName: authentik-media
+  volumeMounts:
+    - name: media
+      mountPath: /media
+worker:
+  volumes:
+    - name: media
+      persistentVolumeClaim:
+        claimName: authentik-media
+  volumeMounts:
+    - name: media
+      mountPath: /media

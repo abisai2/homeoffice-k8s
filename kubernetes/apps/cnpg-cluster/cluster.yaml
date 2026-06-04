@@ -23,3 +23,14 @@ spec:
       parameters:
         barmanObjectName: wasabi-store     # the ObjectStore below
         serverName: postgres               # backup folder name under the destination path
+  # Declarative role for authentik (P7.6). Password from the basic-auth secret
+  # authentik-db-role (same value lives in the authentik-secrets KSOPS secret in the
+  # authentik namespace as AUTHENTIK_POSTGRESQL__PASSWORD — keep them in sync).
+  # The `authentik` database (owned by this role) is created by database-authentik.yaml.
+  managed:
+    roles:
+      - name: authentik
+        ensure: present
+        login: true
+        passwordSecret:
+          name: authentik-db-role
