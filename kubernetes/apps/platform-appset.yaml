@@ -15,15 +15,16 @@ spec:
   generators:
     - list:
         elements:
-          - { name: cilium,        namespace: kube-system,     syncWave: "-10" }
-          - { name: cert-manager,  namespace: cert-manager,    syncWave: "-5" }
-          - { name: gateway,       namespace: gateway,         syncWave: "0" }
-          - { name: longhorn,      namespace: longhorn-system, syncWave: "1" }
-          - { name: cnpg-operator, namespace: cnpg-system,     syncWave: "2" }
-          - { name: velero,        namespace: velero,          syncWave: "5" }
-          - { name: etcd-backup,   namespace: etcd-backup,     syncWave: "5" }
-          - { name: cnpg-cluster,  namespace: databases,       syncWave: "10" }
-          - { name: authentik,     namespace: authentik,       syncWave: "15" }
+          - { name: cilium,             namespace: kube-system,     syncWave: "-10" }
+          - { name: cert-manager,       namespace: cert-manager,    syncWave: "-5" }
+          - { name: gateway,            namespace: gateway,         syncWave: "0" }
+          - { name: longhorn,           namespace: longhorn-system, syncWave: "1" }
+          - { name: cnpg-operator,      namespace: cnpg-system,     syncWave: "2" }
+          - { name: barman-cloud-plugin, namespace: cnpg-system,    syncWave: "3" }
+          - { name: velero,             namespace: velero,          syncWave: "5" }
+          - { name: etcd-backup,        namespace: etcd-backup,     syncWave: "5" }
+          - { name: cnpg-cluster,       namespace: databases,       syncWave: "10" }
+          - { name: authentik,          namespace: authentik,       syncWave: "15" }
   template:
     metadata:
       name: "{{ .name }}"

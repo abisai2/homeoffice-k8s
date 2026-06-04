@@ -1,0 +1,25 @@
+# 3-instance HA PostgreSQL (CloudNativePG). One instance per worker via soft
+# pod anti-affinity (preferred — degrades gracefully during node maintenance /
+# the single-host Veeam window). Storage on longhorn-r1 (replica-1: CNPG already
+# replicates at the app layer via streaming replication, so Longhorn replication
+# would be redundant). Backups via the Barman Cloud Plugin -> Wasabi (ObjectStore).
+# PostgreSQL image is the operator default (imageName omitted; pin later if needed).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres
+spec:
+  instances: 3
+  storage:
+    storageClass: longhorn-r1
+    size: 10Gi
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: preferred
+    topologyKey: kubernetes.io/hostname
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: wasabi-store     # the ObjectStore below
+        serverName: postgres               # backup folder name under the destination path

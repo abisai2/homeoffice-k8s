@@ -1,0 +1,26 @@
+# Barman Cloud Plugin backup target (Wasabi S3). The Cluster references this by name
+# (plugins[].parameters.barmanObjectName). serverName is set on the Cluster plugin
+# parameter, NOT here. Credentials via the KSOPS secret (same namespace).
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: wasabi-store
+spec:
+  retentionPolicy: "30d"
+  configuration:
+    destinationPath: s3://homeoffice-k8s-backups/cnpg/
+    endpointURL: https://s3.us-east-1.wasabisys.com
+    s3Credentials:
+      accessKeyId:
+        name: cnpg-backup-credential
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: cnpg-backup-credential
+        key: ACCESS_SECRET_KEY
+      region:
+        name: cnpg-backup-credential
+        key: AWS_REGION
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
