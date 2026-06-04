@@ -2,9 +2,8 @@
 # cert-manager writes the keypair into Secret `wildcard-tls` (same namespace), which
 # the Gateway's HTTPS listener references.
 #
-# Issuer is letsencrypt-STAGING initially — validate the split-horizon DNS-01 flow
-# end-to-end (untrusted cert, no prod rate limits), then flip to letsencrypt-prod at
-# P7.9 (one-line issuerRef change) for the real trusted cert.
+# Issuer is letsencrypt-prod. Staging validated the split-horizon DNS-01 flow end-to-end
+# (cert issued Ready at P7.9); flipped to prod for the real trusted cert.
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -12,7 +11,7 @@ metadata:
 spec:
   secretName: wildcard-tls
   issuerRef:
-    name: letsencrypt-staging
+    name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
     - "*.k8s-talos1.ap169homeoffice.net"

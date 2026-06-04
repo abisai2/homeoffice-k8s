@@ -14,6 +14,10 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+### Changed
+- gateway: flip the wildcard `Certificate` issuer `letsencrypt-staging` → `letsencrypt-prod`
+  for a trusted cert (staging validated the DNS-01/Cloudflare flow end-to-end).
+
 ### Fixed
 - longhorn: disable the pre-upgrade checker Job (`preUpgradeChecker.jobEnabled: false`).
   Rendered as a helm pre-upgrade hook it became an Argo PreSync hook that deadlocked the
