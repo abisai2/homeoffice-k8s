@@ -74,3 +74,19 @@ tasks:
   release:
     desc: "Cut a SemVer release (bumps both pins + VERSION + CHANGELOG, commits, tags)"
     cmds: ["./scripts/release.sh {{.CLI_ARGS}}"]
+
+  sops:encrypt:
+    desc: "Encrypt a secret file IN PLACE (recipient via .sops.yaml). Usage: task sops:encrypt -- <file.sops.yaml>"
+    cmds: ["sops --encrypt --in-place {{.CLI_ARGS}}"]
+
+  sops:edit:
+    desc: "Edit an encrypted secret in $EDITOR (decrypts in memory, re-encrypts on save). Usage: task sops:edit -- <file.sops.yaml>"
+    cmds: ["sops {{.CLI_ARGS}}"]
+
+  sops:decrypt:
+    desc: "Decrypt a secret to STDOUT (prints plaintext — local view only). Usage: task sops:decrypt -- <file.sops.yaml>"
+    cmds: ["sops --decrypt {{.CLI_ARGS}}"]
+
+  sops:render:
+    desc: "Render an app dir's kustomize WITH KSOPS locally to verify decryption (needs ksops). Usage: task sops:render -- kubernetes/apps/<app>"
+    cmds: ["kustomize build --enable-alpha-plugins --enable-exec --enable-helm {{.CLI_ARGS}}"]

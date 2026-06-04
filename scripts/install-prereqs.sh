@@ -143,6 +143,15 @@ if need kustomize; then
   bin "$CACHE/kustomize" kustomize
 else echo "kustomize present, skip"; fi
 
+# ── ksops (KSOPS exec plugin — local KSOPS render; pinned to Argo's repo-server image tag) ──
+KSOPS_VER="v4.5.1"
+if need ksops; then
+  echo "== ksops $KSOPS_VER =="
+  dl "https://github.com/viaduct-ai/kustomize-sops/releases/download/${KSOPS_VER}/ksops_${KSOPS_VER#v}_Linux_${ARCH/amd64/x86_64}.tar.gz" "$CACHE/ksops.tgz"
+  tar -xzf "$CACHE/ksops.tgz" -C "$CACHE" ksops
+  bin "$CACHE/ksops" ksops
+else echo "ksops present, skip"; fi
+
 # ── kubeconform (manifest lint) ──────────────────────────────────────────────
 if need kubeconform; then
   echo "== kubeconform =="
