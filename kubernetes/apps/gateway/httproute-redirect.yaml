@@ -1,0 +1,17 @@
+# Sample HTTPRoute: redirect all plain HTTP (:80 listener) to HTTPS. Self-contained
+# (no backend) and demonstrates the parentRef + filter pattern. Platform apps add
+# their own HTTPRoutes (with backendRefs) attached to the same Gateway's https listener.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: http-to-https-redirect
+spec:
+  parentRefs:
+    - name: main
+      sectionName: http
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301

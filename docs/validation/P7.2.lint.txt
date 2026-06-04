@@ -1,0 +1,21 @@
+# P7.2 gateway lint (2026-06-04)
+Gateway API v1.4.1 (live CRDs: gateways/httproutes v1, referencegrants v1beta1).
+GatewayClass cilium Accepted=True. LB IP pinned via Gateway spec.addresses (.120, in pool .120-.139).
+
+Render: kustomize build kubernetes/apps/gateway  -> 3 docs
+  Certificate/wildcard-k8s-talos1 (gateway ns; issuerRef letsencrypt-staging; dnsNames *.k8s-talos1.ap169homeoffice.net; secretName wildcard-tls)
+  Gateway/main (gateway ns; gatewayClassName cilium; addresses .120; listeners http:80 [redirect, from:Same] + https:443 [wildcard-tls, from:All])
+  HTTPRoute/http-to-https-redirect (gateway ns; parentRef main/http; RequestRedirect -> https 301)
+
+kubeconform -kubernetes-version 1.36.1 -ignore-missing-schemas -summary:
+  Summary: 3 resources found in 1 file - Valid: 0, Invalid: 0, Errors: 0, Skipped: 3 (all CRs, no schema)
+
+Server-side dry-run vs LIVE Gateway API CRDs (ns overridden to default, read-only):
+  gateway.gateway.networking.k8s.io/main created (server dry run)
+  httproute.gateway.networking.k8s.io/http-to-https-redirect created (server dry run)
+  -> Gateway + HTTPRoute schemas (addresses/listeners/tls/RequestRedirect/sectionName) accepted by v1.4.1 CRDs.
+  (Certificate not dry-run: cert-manager CRDs install at P7.9.)
+
+FOLLOW-UPS before/at P7.9:
+  - Flip Certificate issuerRef letsencrypt-staging -> letsencrypt-prod once staging issues OK.
+  - Internal DNS (Technitium): A record *.k8s-talos1.ap169homeoffice.net -> 172.16.23.120 (operator/DNS infra).
