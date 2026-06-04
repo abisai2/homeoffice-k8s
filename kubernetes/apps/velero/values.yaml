@@ -1,5 +1,11 @@
 # velero chart values (12.0.2 / velero 1.18.1).
 ---
+# CRDs are managed declaratively via the kustomize helmChart `includeCRDs: true`, so
+# disable the chart's CRD-install Job. That Job is a helm pre-install/pre-upgrade hook
+# (Argo PreSync); Argo's pre-sync dry-run of the BackupStorageLocation/Schedule CRs fails
+# ("CRD not found") and aborts the whole sync before the hook can run — a deadlock.
+upgradeCRDs: false
+
 # AWS object-store plugin for Wasabi S3. Plugin v1.14.1 matches velero 1.18.x
 # (velero 1.17 -> plugin 1.13, so 1.18 -> 1.14; the upstream README matrix lags).
 initContainers:

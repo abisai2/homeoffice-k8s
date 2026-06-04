@@ -7,6 +7,9 @@ helmCharts:
     version: "12.0.2"          # appVersion velero 1.18.1
     namespace: velero
     valuesFile: values.yaml
+    includeCRDs: true          # velero ships CRDs in crds/; render them so Argo manages
+                               # them declaratively (paired with upgradeCRDs:false in values,
+                               # which drops the deadlocking pre-install/upgrade CRD hook Job)
 # Wasabi S3 credential (velero ns), key `cloud` — see secret.example.yaml.
 generators:
   - secret-generator.yaml

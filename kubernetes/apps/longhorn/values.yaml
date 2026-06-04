@@ -11,6 +11,13 @@ persistence:
   defaultClassReplicaCount: 3
   reclaimPolicy: Delete
 
+# Disable the pre-upgrade checker Job — Longhorn's own chart comment recommends this
+# for Argo CD / GitOps installs. Rendered as a helm pre-upgrade hook it becomes an Argo
+# PreSync hook that deadlocks on a fresh sync: the Job needs `longhorn-service-account`,
+# which Argo only creates in the Sync phase (gated behind the hook). Unneeded on install.
+preUpgradeChecker:
+  jobEnabled: false
+
 defaultSettings:
   # Backup to Wasabi S3 (same account as the Terraform state backend). The trailing
   # slash is REQUIRED; the `longhorn/` subpath separates these from velero/etcd backups

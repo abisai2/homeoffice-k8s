@@ -14,6 +14,16 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+### Fixed
+- longhorn: disable the pre-upgrade checker Job (`preUpgradeChecker.jobEnabled: false`).
+  Rendered as a helm pre-upgrade hook it became an Argo PreSync hook that deadlocked the
+  first sync — the Job needs `longhorn-service-account`, a Sync-phase resource gated behind
+  the hook. Longhorn's chart explicitly recommends disabling it for Argo CD / GitOps.
+- velero: render CRDs declaratively (`includeCRDs: true`) and disable the chart's CRD-install
+  hook (`upgradeCRDs: false`). The chart ships CRDs in `crds/` (excluded by kustomize-helm by
+  default), so the `BackupStorageLocation`/`Schedule` CRs failed pre-sync dry-run ("CRD not
+  found") and aborted the whole sync before the pre-install hook could create them.
+
 ## [0.1.0] - 2026-06-04
 
 ### Added
