@@ -26,6 +26,11 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 - longhorn: label the `longhorn-system` namespace `pod-security.kubernetes.io/enforce:
   privileged`. Talos enforces `baseline` PSS on all non-kube-system namespaces, which rejects
   the privileged, host-path `longhorn-manager` DaemonSet. Added an explicit Namespace manifest.
+- argo: enable `ServerSideDiff=true` (compare-options) on all platform Applications via the
+  ApplicationSet. The client-side default diff flagged CRD-schema defaults (Gateway API
+  HTTPRoute/Gateway `group`/`kind`/`weight`/`matches.path`) and CNPG mutating-webhook fields
+  as perpetual false `OutOfSync` (Healthy but never Synced). SSA-based diff scopes comparison
+  to Argo-managed fields.
 
 ## [0.1.0] - 2026-06-04
 

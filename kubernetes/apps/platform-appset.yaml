@@ -31,6 +31,12 @@ spec:
       namespace: argocd
       annotations:
         argocd.argoproj.io/sync-wave: "{{ .syncWave }}"
+        # Server-side diff: compute drift via a server-side apply dry-run so CRD-schema
+        # defaults (Gateway API: parentRefs/backendRefs group/kind/weight, matches.path)
+        # and mutating-webhook fields (CNPG Cluster) don't show as false OutOfSync. The
+        # client-side default diff flags these apiserver/controller-owned fields; SSA diff
+        # scopes the comparison to Argo-managed fields. (Argo CD ServerSideDiff, stable v3.1+.)
+        argocd.argoproj.io/compare-options: ServerSideDiff=true
     spec:
       project: default
       source:
