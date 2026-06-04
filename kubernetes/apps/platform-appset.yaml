@@ -36,7 +36,7 @@ spec:
       source:
         repoURL: "git@github.com:abisai2/homeoffice-k8s.git"   # SSH: private repo, read-only deploy key
         # ▼▼ SINGLE SOURCE OF TRUTH for the platform's tracked version ▼▼
-        targetRevision: v0.1.0
+        targetRevision: build          # BRING-UP: branch-tracking; lock to vX.Y.Z when green
         # ▲▲ bump via scripts/release.sh (keeps root-app.yaml in lockstep) ▲▲
         path: "kubernetes/apps/{{ .name }}"
       destination:
