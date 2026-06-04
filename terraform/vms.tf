@@ -8,7 +8,7 @@ resource "vsphere_virtual_machine" "node" {
   for_each = var.nodes
 
   name             = each.key
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  resource_pool_id = data.vsphere_compute_cluster.cluster.resource_pool_id # cluster root pool — no dedicated resource pool
   datastore_id     = data.vsphere_datastore.ds.id
   folder           = var.vsphere_folder
 

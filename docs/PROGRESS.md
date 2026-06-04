@@ -5,13 +5,13 @@
 > Status legend: ☐ pending · ◐ in-progress · ☑ done · ⚠ blocked.
 
 ## RESUME HERE
-- **Phase / checkpoint:** ⚠ BLOCKED at **P2.3 (cluster bring-up)**. Session ended for a fresh restart — read **SESSION HANDOFF (2026-06-03)** at the bottom of this file FIRST.
+- **Phase / checkpoint:** ⚠ BLOCKED at **P2.3 (etcd bootstrap)**. Live state re-confirmed 2026-06-03 (6 VMs up, Talos v1.13.3 reachable on .31–.36, etcd NOT bootstrapped). Read **SESSION HANDOFF (2026-06-03)** at the bottom FIRST, then **Next action** below.
 - **Branch:** `build`
-- **Last commit:** `ddf14bf` (repo-ssh deploy-key secret)
-- **Next action:** P4.0 verify Argo chart + KSOPS repo-server wiring → P4.1 author `kubernetes/bootstrap/argocd/` + `root-app.yaml` + `platform-appset.yaml`. Then continue P5/P6/P7 authoring. Gated/in-cluster steps (P2.3, P3.2, P4.2, P7.9) run when the cluster is up.
+- **Last commit:** checkpoint — removed dedicated RP + DRS anti-affinity from TF **config** + doc corrections (live infra untouched). Run `git log --oneline -5` for the hash.
+- **Next action:** ⚠ **Diagnose P2.3 first** — from the live node, determine *why* etcd won't bootstrap **before changing anything** (do NOT guess — see SESSION HANDOFF lesson): `talosctl --talosconfig talos/clusterconfig/talosconfig -n 172.16.23.31 services` · `health` · `dmesg` · `logs etcd` · `logs machined`. Then bootstrap etcd on cp1 → fetch kubeconfig (P2.3 exit-verify). After the cluster is up: author the `bootstrap.sh cluster` subcommand → P3.2/P4.2 in-cluster installs → P5–P10.
 - **Operator-run queue:** (1) ✅ apply done — 6 VMs up. (2) **Talos bootstrap** (first run failed — GOVC_ not exported; fixed w/ guard) — run: `set -a; source ~/.credentials/api-tokens/vcenter-admin.creds; set +a; export SOPS_AGE_KEY_FILE=~/.credentials/age/homeoffice-k8s.agekey; cd /mnt/homeoffice-infra/repos/homeoffice-k8s; ./scripts/bootstrap.sh talos`
 - **TF env reminder:** export `AWS_ACCESS_KEY_ID/SECRET` from `wasabi-homeoffice-k8s.creds` (backend) and `VSPHERE_USER/PASSWORD` from `vcenter-admin.creds` (provider) before plan/apply.
-- **Key facts:** template `talos-v1.13.3` in `/ap169home-dc/vm/Templates` (config.template=true) · schematic `613e1592…961245` · installer img `factory.talos.dev/installer/613e1592…961245:v1.13.3` · network `vds01_pg-Kubernetes` · ds `fs1-esxi-ds1` · pool `Kubernetes Pool` · folder `/vm/Kubernetes` · TF creds via `vcenter-admin.creds` (VSPHERE_USER/PASSWORD env).
+- **Key facts:** template `talos-v1.13.3` in `/ap169home-dc/vm/Templates` (config.template=true) · schematic `613e1592…961245` · installer img `factory.talos.dev/installer/613e1592…961245:v1.13.3` · network `vds01_pg-Kubernetes` · ds `fs1-esxi-ds1` · cluster root pool (no dedicated RP) · folder `/vm/Kubernetes` · TF creds via `vcenter-admin.creds` (VSPHERE_USER/PASSWORD env).
 - **Verified pins:** Talos v1.13.3 · k8s v1.36.1 · vsphere 2.16.0 · Gateway API v1.5.1.
 - **Remaining pauses (max-autonomy):** 🚦 only **PR build→main (P10.2)** and any **destructive restore/teardown** (P8.2/P9.1). Everything else (apply, bootstrap, in-cluster, tags) runs unattended.
 
@@ -37,7 +37,7 @@ permission bypasses, regardless of the in-conversation "max autonomy". Operating
 - ☑ P1.0 VERIFY — Talos v1.13.3, k8s v1.36.1, vsphere provider 2.12.0, Gateway API v1.5.1
 - ☑ P1.1 Image Factory schematic `613e1592…` + OVA → vCenter template `talos-v1.13.3` (config.template=true) — evidence `docs/validation/P1.1.template.txt`
 - ☑ P1.2 terraform scaffold + Wasabi backend (vmware/vsphere 2.16.0, `init`+`validate` OK) — evidence `docs/validation/P1.2.init.txt`
-- ☑ P1.3 vms.tf + anti-affinity + outputs — plan = 8 to add (6 VMs + 2 rules); CP 64G, worker 64G+300G — evidence `docs/validation/P1.3.plan.txt`
+- ☑ P1.3 vms.tf + anti-affinity + outputs — plan = 8 to add (6 VMs + 2 rules); CP 64G, worker 64G+300G — evidence `docs/validation/P1.3.plan.txt` · _(2026-06-03: dedicated RP + DRS anti-affinity removed from TF per operator decision — see event log)_
 - ☑ P1.4 terraform apply — operator-run; 6 VMs created + powered on (Talos maintenance mode, no IP, vmtools not running) — verified via govc, evidence `docs/validation/P1.4.vms.txt`
 
 ### Phase 2 — Talos config + bootstrap
@@ -100,6 +100,7 @@ are in `PLAN.md §1` and the project memory.
 - P1.4 done (operator ran apply): 6 VMs created+powered on. P2.3 driver scripts/bootstrap.sh authored (guestinfo bring-up: VLAN23 has no DHCP and Talos maintenance mode runs no vmtools, so config is injected via guestinfo, nodes boot to static IPs .31-.36). Ready for operator to run.
 - P3.0/3.1: Cilium 1.19.4 verified (kubeProxyReplacement true, VIP .30; CRD apiVersions corrected vs reference: IP pool cilium.io/v2, L2 v2alpha1). Authored kubernetes/apps/cilium/ (kustomization+values+lb-pool .120-.139+l2policy); helm template 34 obj + kubeconform clean.
 - P4.0/4.1: Argo CD 9.5.17 + KSOPS v4.5.1 verified; authored kubernetes/bootstrap/argocd/values.yaml (KSOPS wiring), root-app.yaml (repoURL homeoffice-k8s, pin v0.1.0), platform-appset.yaml (9 components, sync-wave order). Render 53 obj + kubeconform clean.
+- 2026-06-03 (operator decision): removed the dedicated resource pool + DRS anti-affinity from the Terraform **config**. `anti-affinity.tf` deleted; VMs now reference the cluster **root** pool (`data.vsphere_compute_cluster.cluster.resource_pool_id`); `vsphere_resource_pool` var/data-source/tfvars dropped; `hashicorp/vsphere`→`vmware/vsphere` doc drift fixed. Verified: `validate` OK; `plan` (read-only creds) = **6 VMs update in-place** (`resource_pool_id` resgroup-2042 *Kubernetes Pool* → resgroup-2002 *root*), **0 destroy, no recreate**. **Live infra unchanged — apply is operator-gated.** Findings: (a) apply reparents the 6 VMs pool→root in-place (non-disruptive); (b) the 2 live DRS rules are **NOT destroyed** by apply (plan = 0 delete; Terraform did not propose removing the config-orphaned rules) — they remain in vCenter, consistent with "keep what we have". To also drop them from TF **state** (live rules kept), run `terraform state rm vsphere_compute_cluster_vm_anti_affinity_rule.control_plane vsphere_compute_cluster_vm_anti_affinity_rule.workers`.
 
 ---
 

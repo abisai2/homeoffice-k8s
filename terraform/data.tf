@@ -8,11 +8,6 @@ data "vsphere_compute_cluster" "cluster" {
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data "vsphere_resource_pool" "pool" {
-  name          = "${var.vsphere_cluster}/Resources/${var.vsphere_resource_pool}"
-  datacenter_id = data.vsphere_datacenter.dc.id
-}
-
 data "vsphere_datastore" "ds" {
   name          = var.vsphere_datastore
   datacenter_id = data.vsphere_datacenter.dc.id

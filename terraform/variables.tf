@@ -11,10 +11,6 @@ variable "vsphere_cluster" {
   description = "Compute cluster name"
   type        = string
 }
-variable "vsphere_resource_pool" {
-  description = "Resource pool name (under the cluster)"
-  type        = string
-}
 variable "vsphere_datastore" {
   description = "Datastore for OS + Longhorn data disks (all-NFS per design)"
   type        = string

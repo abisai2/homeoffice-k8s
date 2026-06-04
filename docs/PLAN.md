@@ -18,11 +18,11 @@
 | API VIP | `k8s-talos1` `.30` (Talos-managed, layer-2) |
 | Network | `172.16.23.0/24`, gw `.1`, DNS `172.16.10.5/.6`, VLAN 23 / `vds01_pg-Kubernetes` |
 | LB pool | Cilium **L2 Announcements + LB-IPAM** `.120–.139` (gateway = `.120`) |
-| Provisioning | **Terraform only** (`hashicorp/vsphere`) for VMs; **talosctl scripts** for Talos bring-up. No Ansible. |
+| Provisioning | **Terraform only** (`vmware/vsphere`) for VMs; **talosctl scripts** for Talos bring-up. No Ansible. |
 | Talos image | Image Factory OVA (extensions `iscsi-tools`, `util-linux-tools`) → vCenter template → cloned |
 | PKI custody | `talosctl gen secrets` → **SOPS in git** → rendered by talosctl. **Never in Terraform state.** |
 | TF state | **Wasabi S3 backend** (`use_lockfile`); holds vSphere data only (non-precious) |
-| vSphere | vcsa01 · dc `ap169home-dc` · cluster `ap169home-cluster01` (esxi01/02) · RP `Kubernetes Pool` · folder `/vm/Kubernetes` · datastore **`fs1-esxi-ds1`** (all disks) · DRS **should**-anti-affinity |
+| vSphere | vcsa01 · dc `ap169home-dc` · cluster `ap169home-cluster01` (esxi01/02) · folder `/vm/Kubernetes` · datastore **`fs1-esxi-ds1`** (all disks) · VMs in cluster **root** pool (no dedicated RP, no DRS rules) |
 | GitOps | Argo CD app-of-apps → `platform` ApplicationSet → per-component kustomize dirs, sync-wave ordered; **release-pinned to a SemVer tag** on `git@github.com:abisai2/homeoffice-k8s.git` |
 | Secrets | SOPS + age (key `~/.credentials/age/homeoffice-k8s.agekey`), KSOPS in argocd-repo-server |
 | Storage | Longhorn workers-only · **replica-3** (apps) + a **replica-1** StorageClass for CNPG |
@@ -39,7 +39,7 @@ Recorded as an ADR.
 ## 2. Repo layout
 
 ```
-terraform/   vsphere VMs (clone template), disks, MAC-pin, should-anti-affinity, Wasabi S3 backend
+terraform/   vsphere VMs (clone template), disks, MAC-pin, Wasabi S3 backend
 talos/       secrets.sops.yaml (PKI root) + patches/{controlplane,worker,node-*}.yaml ; clusterconfig/ (gitignored)
 kubernetes/  bootstrap/ (argocd install + root-app + repo-ssh.sops) ; apps/ (platform-appset + per-component dirs)
 scripts/     install-prereqs · talos-gen · bootstrap · cluster-shutdown/startup (Veeam window) · lint · release
@@ -112,10 +112,10 @@ matching blog post (§6).
 ### Phase 1 — Terraform: template + VMs
 | ID | Action | Exit-verify |
 |---|---|---|
-| P1.0 | VERIFY: `hashicorp/vsphere` provider current version + `vsphere_virtual_machine`/anti-affinity schema; Talos Image Factory OVA process; latest Talos **v1.13.x** + its k8s version | rows written to VERIFIED-VERSIONS |
+| P1.0 | VERIFY: `vmware/vsphere` provider current version + `vsphere_virtual_machine` schema; Talos Image Factory OVA process; latest Talos **v1.13.x** + its k8s version | rows written to VERIFIED-VERSIONS |
 | P1.1 | Build Image Factory schematic (vmware, `iscsi-tools`+`util-linux-tools`); import OVA → vCenter template (govc/content-library), scripted + documented | `govc vm.info <template>` exists, `template: true` |
 | P1.2 | `terraform/` scaffold: `versions.tf` (+ Wasabi S3 backend), `providers.tf` (env creds), `variables.tf`, `terraform.tfvars` (discovered facts) | `terraform init` ok; `terraform validate` ok |
-| P1.3 | `vms.tf` (6 clones, OS+data disks, MAC-pin, network, RP/folder), `anti-affinity.tf` (should-rules), `outputs.tf` | `terraform plan` = 6 VMs, no errors → `docs/validation/P1.3.plan.txt` |
+| P1.3 | `vms.tf` (6 clones, OS+data disks, MAC-pin, network, root pool + folder), `outputs.tf` | `terraform plan` = 6 VMs, no errors → `docs/validation/P1.3.plan.txt` |
 | 🚦 P1.4 | `terraform apply` | 6 VMs powered; Talos maintenance mode; govc reports guest IPs |
 
 ### Phase 2 — Talos config + bootstrap (no SSH)

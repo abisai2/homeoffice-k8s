@@ -21,7 +21,7 @@ The authoritative state lives on disk — start here:
 | Area | Choice |
 |---|---|
 | OS / cluster | Talos Linux v1.13.x, 3 control-plane (HA etcd) + 3 workers, API **VIP** `172.16.23.30` |
-| Provisioning | **Terraform** (`hashicorp/vsphere`) + native `talosctl` bring-up (no Ansible) |
+| Provisioning | **Terraform** (`vmware/vsphere`) + native `talosctl` bring-up (no Ansible) |
 | Secrets | SOPS + age (one key restores Talos PKI **and** k8s secrets) |
 | GitOps | Argo CD (app-of-apps) + KSOPS, release-pinned to a SemVer tag |
 | CNI + LB | Cilium (kube-proxy replacement, L2 announcements, LB-IPAM) |
@@ -39,7 +39,7 @@ with the *why* recorded as ADRs in [`docs/adr/`](docs/adr/).
 ## Layout
 
 ```
-terraform/   vSphere VM provisioning (clone Talos template, disks, network, anti-affinity)
+terraform/   vSphere VM provisioning (clone Talos template, disks, network)
 talos/       talosctl secrets (SOPS) + machine-config patches
 kubernetes/  bootstrap/ (Argo install + root app) and apps/ (ApplicationSet → component kustomize dirs)
 scripts/     install-prereqs · talos-gen · bootstrap · cluster shutdown/startup · lint · release

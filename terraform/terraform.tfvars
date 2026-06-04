@@ -1,14 +1,13 @@
 # Discovered from vcsa01.homeoffice.local (govc, 2026-06-03). Non-secret.
 # vCenter credentials come from the environment (VSPHERE_USER/VSPHERE_PASSWORD).
 
-vsphere_server        = "vcsa01.homeoffice.local"
-vsphere_datacenter    = "ap169home-dc"
-vsphere_cluster       = "ap169home-cluster01"
-vsphere_resource_pool = "Kubernetes Pool"
-vsphere_datastore     = "fs1-esxi-ds1"
-vsphere_network       = "vds01_pg-Kubernetes"
-vsphere_folder        = "Kubernetes"
-vsphere_template      = "talos-v1.13.3"
+vsphere_server     = "vcsa01.homeoffice.local"
+vsphere_datacenter = "ap169home-dc"
+vsphere_cluster    = "ap169home-cluster01"
+vsphere_datastore  = "fs1-esxi-ds1"
+vsphere_network    = "vds01_pg-Kubernetes"
+vsphere_folder     = "Kubernetes"
+vsphere_template   = "talos-v1.13.3"
 
 network_gateway = "172.16.23.1"
 network_prefix  = 24
