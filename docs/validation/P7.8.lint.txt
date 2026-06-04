@@ -1,0 +1,36 @@
+# P7.8 etcd-backup lint (2026-06-04)
+Talos-native etcd snapshot -> Wasabi, daily CronJob. No helm chart (plain manifests).
+
+Verified: `talosctl etcd snapshot <path>` (flags -n/-e/--talosconfig); least-privilege role
+`os:etcd:backup` (talosctl config new --roles); image ghcr.io/siderolabs/talosctl:v1.13.3
+EXISTS (matches cluster Talos); uploader amazon/aws-cli:2.34.61. Both images default to root
+(User unset) -> pod forced to run non-root.
+
+kubernetes/apps/etcd-backup/ (ns etcd-backup, sync-wave 5):
+  - CronJob etcd-backup: schedule "0 1 * * *" (5-field), concurrencyPolicy Forbid,
+    history 3/3, backoffLimit 2.
+    initContainer `snapshot` (distroless talosctl, shell-free args):
+      talosctl --talosconfig=/tc/talosconfig etcd snapshot /backup/etcd.snapshot
+      (endpoints come from the scoped talosconfig).
+    container `upload` (aws-cli, has shell): date-stamps + aws s3 cp /backup/etcd.snapshot
+      s3://homeoffice-k8s-backups/etcd/etcd-<UTC>.snapshot --endpoint-url wasabi.
+    Hardened to restricted PSS: runAsNonRoot/runAsUser 65532, fsGroup 65532 (shared emptyDir),
+    seccomp RuntimeDefault, allowPrivilegeEscalation false, caps drop ALL; HOME=/tmp for aws-cli;
+    automountServiceAccountToken false (never calls the k8s API).
+  - ServiceAccount etcd-backup (no RBAC; token automount off).
+  - KSOPS secrets: etcd-backup-talosconfig (key talosconfig) + etcd-backup-wasabi (AWS_*).
+
+Lint: render 4 docs; kubeconform 1.36.1 Valid 4 / Invalid 0 / Skipped 0 (all core kinds).
+Server-side dry-run: cronjob.batch/etcd-backup created (server dry run) — NO PodSecurity warning
+after hardening (initial unhardened render warned under restricted).
+
+OPERATOR before P7.9:
+  - Generate the scoped talosconfig + paste it:
+      talosctl --talosconfig talos/clusterconfig/talosconfig config new --roles os:etcd:backup \
+        --crt-ttl 8760h /tmp/etcd-backup.talosconfig
+      talosctl --talosconfig /tmp/etcd-backup.talosconfig config endpoint 172.16.23.31 .32 .33
+      task sops:edit -- kubernetes/apps/etcd-backup/secret-talosconfig.sops.yaml   # paste content
+  - Wasabi keys: task sops:edit -- kubernetes/apps/etcd-backup/secret-wasabi.sops.yaml
+RUNTIME CAVEAT: talosctl + aws-cli are forced non-root (65532); confirm the first scheduled run
+succeeds (both are CLIs that need no root, but verify pod->CP :50000 reachability + the snapshot upload).
+Retention: rely on a Wasabi bucket lifecycle policy for old etcd-*.snapshot objects (not in-job).
