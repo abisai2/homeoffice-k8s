@@ -18,7 +18,12 @@ persistence:
 preUpgradeChecker:
   jobEnabled: false
 
-defaultSettings:
+# Seeds the `default` BackupTarget CR via the longhorn-default-resource ConfigMap
+# (chart templates/default-resource.yaml). NOTE: this is `defaultBackupStore`, NOT
+# `defaultSettings` — Longhorn 1.12 removed the legacy `backup-target` *setting* and
+# moved the backup target to a BackupTarget CRD; keys under defaultSettings are
+# silently ignored, leaving the target empty.
+defaultBackupStore:
   # Backup to Wasabi S3 (same account as the Terraform state backend). The trailing
   # slash is REQUIRED; the `longhorn/` subpath separates these from velero/etcd backups
   # in the shared homeoffice-k8s-backups bucket. Credentials via the KSOPS secret below.

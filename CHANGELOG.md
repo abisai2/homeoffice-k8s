@@ -14,6 +14,24 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+### Added
+- longhorn: `daily-backup` RecurringJob (group `default`, `task: backup`, cron `0 4 * * *`,
+  retain 7) — daily volume backups to the Wasabi backup target. Was deferred from P7.3;
+  Longhorn was the only backup layer without a daily schedule (cnpg 02:00 / velero 03:00 /
+  etcd 01:00).
+
+### Fixed
+- longhorn: set the backup target via `defaultBackupStore.*` instead of `defaultSettings.*`.
+  Longhorn 1.12 removed the legacy `backup-target` *setting* and seeds the BackupTarget CRD
+  from `defaultBackupStore.{backupTarget,backupTargetCredentialSecret}` — the `defaultSettings`
+  keys were silently ignored, leaving the `default` BackupTarget empty (`available: false`).
+  (Running cluster also needed a one-time live patch of the `default` BackupTarget — the seed
+  ConfigMap is consumed only at first boot.)
+- etcd-backup: add `--nodes=172.16.23.31` to the `talosctl etcd snapshot` args. The scoped
+  talosconfig sets endpoints but no default node, and `etcd snapshot` targets exactly one
+  node — without it talosctl errored "nodes are not set for the command" and the CronJob
+  failed on its first real run.
+
 ## [0.1.1] - 2026-06-04
 
 ### Changed

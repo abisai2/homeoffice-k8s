@@ -35,6 +35,11 @@ spec:
                   drop: ["ALL"]
               args:
                 - --talosconfig=/tc/talosconfig  # endpoints live in this scoped config
+                # `etcd snapshot` targets ONE node; the scoped talosconfig sets endpoints
+                # but no default node, so a node MUST be named or talosctl errors
+                # ("nodes are not set for the command") and prints usage. Any single CP
+                # works — every etcd member holds identical data.
+                - --nodes=172.16.23.31
                 - etcd
                 - snapshot
                 - /backup/etcd.snapshot
