@@ -14,6 +14,8 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-06-04
+
 ### Added
 - longhorn: `daily-backup` RecurringJob (group `default`, `task: backup`, cron `0 4 * * *`,
   retain 7) — daily volume backups to the Wasabi backup target. Was deferred from P7.3;
