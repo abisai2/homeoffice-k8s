@@ -34,7 +34,8 @@ The authoritative state lives on disk — start here:
 ## Documentation
 
 The build is documented as a series of blog posts under [`docs/posts/`](docs/posts/) (mkdocs-material),
-with the *why* recorded as ADRs in [`docs/adr/`](docs/adr/).
+with the *why* recorded as ADRs in [`docs/adr/`](docs/adr/). Start from
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the system map + sync-wave order.
 
 ## Layout
 
