@@ -14,6 +14,8 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-06-05
+
 ### Added
 - ops: `scripts/cluster-shutdown.sh` + `scripts/cluster-startup.sh` for the weekly Veeam
   cold-image window. Shutdown gracefully quiesces the cluster (cordon all → CNPG hibernate →
