@@ -14,6 +14,14 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+### Added
+- ops: `scripts/cluster-shutdown.sh` + `scripts/cluster-startup.sh` for the weekly Veeam
+  cold-image window. Shutdown gracefully quiesces the cluster (cordon all → CNPG hibernate →
+  drain workers → wait Longhorn volumes detached → `talosctl shutdown` workers then control
+  planes → confirm powered off via govc) for a crash-consistent image; startup powers on via
+  govc in order (control planes → etcd quorum + API → workers → uncordon → resume CNPG →
+  verify). Both support `--dry-run`. (Taskfile `shutdown`/`startup` already wrap them.)
+
 ## [0.1.2] - 2026-06-04
 
 ### Added
