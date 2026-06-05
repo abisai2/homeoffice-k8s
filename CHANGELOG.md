@@ -21,6 +21,13 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
   planes → confirm powered off via govc) for a crash-consistent image; startup powers on via
   govc in order (control planes → etcd quorum + API → workers → uncordon → resume CNPG →
   verify). Both support `--dry-run`. (Taskfile `shutdown`/`startup` already wrap them.)
+- docs: `docs/DR-RUNBOOK.md` (recovery assets + per-layer restore procedures — etcd
+  recover-from-snapshot, full rebuild from git+age+Wasabi, Velero, Longhorn, CNPG Barman
+  recovery, Veeam whole-VM fallback) and `docs/deploy-validation-report.md` (build shakedown).
+
+### Fixed
+- docs: correct the Longhorn backup-target key in `VERIFIED-VERSIONS.md`
+  (`defaultSettings.*` → `defaultBackupStore.*`, the actual Longhorn 1.12 key).
 
 ## [0.1.2] - 2026-06-04
 
