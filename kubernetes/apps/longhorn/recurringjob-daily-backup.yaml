@@ -1,0 +1,21 @@
+# Daily Longhorn volume backups to the Wasabi backup target (longhorn/ prefix).
+# Closes the "recurring backup SCHEDULES deferred to P8" item from P7.3 — Longhorn was
+# the only backup layer without a daily schedule (cnpg 02:00 / velero 03:00 / etcd 01:00).
+#
+# groups: [default] — every Longhorn volume is born with the label
+# `recurring-job-group.longhorn.io/default: enabled`, so this job applies to all current
+# and future volumes with no per-volume wiring. cron is standard 5-field (NOT the 6-field
+# robfig form CNPG ScheduledBackup uses). Staggered to 04:00, after the other layers.
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: daily-backup
+  namespace: longhorn-system
+spec:
+  name: daily-backup
+  groups:
+    - default
+  task: backup
+  cron: "0 4 * * *"
+  retain: 7
+  concurrency: 2

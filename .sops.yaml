@@ -1,0 +1,16 @@
+# SOPS creation rules. Any file matching path_regex is encrypted to the age
+# recipient below — the PUBLIC key of ~/.credentials/age/homeoffice-k8s.agekey.
+#
+# The matching age PRIVATE key is the single recovery key for this cluster:
+#   - talosctl/sops decrypt talos/secrets.sops.yaml
+#   - Argo CD (via KSOPS) decrypts kubernetes/**/*.sops.yaml
+# Keep the private key OFF this repo (it lives in ~/.credentials, backed up offline).
+creation_rules:
+  - path_regex: talos/secrets\.sops\.ya?ml$
+    age: "age1k70qedycqmleggtmwcuqwmkzrsldzrc4zxp0c4dymkuk240czsxskt3jfm"
+  - path_regex: terraform/.*\.sops\.ya?ml$
+    age: "age1k70qedycqmleggtmwcuqwmkzrsldzrc4zxp0c4dymkuk240czsxskt3jfm"
+  - path_regex: kubernetes/.*\.sops\.ya?ml$
+    age: "age1k70qedycqmleggtmwcuqwmkzrsldzrc4zxp0c4dymkuk240czsxskt3jfm"
+  - path_regex: .*\.sops\.ya?ml$
+    age: "age1k70qedycqmleggtmwcuqwmkzrsldzrc4zxp0c4dymkuk240czsxskt3jfm"

@@ -1,0 +1,9 @@
+# Applied to every node (control plane + worker). System disk + the Image Factory
+# installer image. Schematic a28d8637… (talos/image/schematic.yaml) = iscsi-tools +
+# util-linux-tools (Longhorn) + vmtoolsd-guest-agent (talos-vmtoolsd, so vCenter sees
+# guest IP/hostname + heartbeat + power control). An install/upgrade keeps this set.
+# Regenerate the ID from source: scripts/talos-image.sh id
+machine:
+  install:
+    disk: /dev/sda
+    image: factory.talos.dev/installer/a28d86375cf9debe952efbcbe8e2886cf0a174b1f4dd733512600a40334977d7:v1.13.3

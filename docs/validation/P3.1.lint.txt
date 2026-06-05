@@ -1,0 +1,3 @@
+# P3.1 cilium lint (2026-06-03T23:20:13Z)
+chart cilium 1.19.4; values k8sServiceHost VIP .30; LB pool .120-.139 (v2); L2 policy v2alpha1
+Summary: 36 resources found in 3 files - Valid: 34, Invalid: 0, Errors: 0, Skipped: 2

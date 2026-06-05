@@ -1,0 +1,13 @@
+# Longhorn requires the `privileged` Pod Security Standard: longhorn-manager runs as a
+# privileged DaemonSet and mounts host paths (/dev, /proc, /var/lib/longhorn, ...).
+# Talos enforces `baseline` PSS on all namespaces except kube-system by default, so the
+# auto-created longhorn-system namespace rejects the manager pods unless labeled here.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: longhorn-system
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged

@@ -1,0 +1,13 @@
+# cert-manager chart values (v1.20.2).
+---
+# Install the CRDs with the chart (chart default is false). keep:true (default) keeps
+# them on uninstall so Certificates/Issuers aren't garbage-collected.
+crds:
+  enabled: true
+
+# Split-horizon DNS: the internal Technitium view serves k8s-talos1.ap169homeoffice.net,
+# so cert-manager must run its DNS-01 self-check against PUBLIC recursive resolvers to
+# see the ACME TXT record it published at Cloudflare (otherwise the self-check loops).
+extraArgs:
+  - --dns01-recursive-nameservers-only
+  - --dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53

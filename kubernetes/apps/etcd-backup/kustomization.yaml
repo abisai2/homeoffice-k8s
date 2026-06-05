@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: etcd-backup
+resources:
+  - serviceaccount.yaml
+  - cronjob.yaml
+# scoped talosconfig (os:etcd:backup) + Wasabi upload creds — see secret.example.yaml.
+generators:
+  - secret-generator.yaml

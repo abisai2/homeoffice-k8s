@@ -1,0 +1,18 @@
+# Per-node: hostname, static address, default route, control-plane VIP.
+machine:
+  network:
+    hostname: k8s-cp2
+    nameservers:
+      - 172.16.10.5
+      - 172.16.10.6
+    interfaces:
+      - deviceSelector:
+          physical: true
+        dhcp: false
+        addresses:
+          - 172.16.23.32/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 172.16.23.1
+        vip:
+          ip: 172.16.23.30

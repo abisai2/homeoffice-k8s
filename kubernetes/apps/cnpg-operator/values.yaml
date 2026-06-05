@@ -1,0 +1,10 @@
+# CloudNativePG operator chart values (0.28.2 / operator 1.29.1).
+---
+# Install the postgresql.cnpg.io CRDs with the chart (the Cluster CRD that P7.5 uses).
+crds:
+  create: true
+
+# PodMonitor requires the Prometheus Operator CRDs, which aren't deployed yet —
+# keep monitoring off until a metrics stack exists.
+monitoring:
+  podMonitorEnabled: false

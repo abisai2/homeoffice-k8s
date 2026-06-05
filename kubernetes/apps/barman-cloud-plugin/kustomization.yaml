@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Barman Cloud Plugin (CNPG-I) — the recommended CloudNativePG backup path (the
+# in-tree spec.backup.barmanObjectStore is deprecated since CNPG 1.26). Installs into
+# cnpg-system, ships the objectstores.barmancloud.cnpg.io CRD, and enables method:plugin
+# backups. Requires cert-manager (its webhook uses a self-signed Issuer + Certificates) —
+# satisfied by cert-manager at sync-wave -5. Pinned upstream release manifest.
+# Update: bump the version in the URL (see https://github.com/cloudnative-pg/plugin-barman-cloud/releases).
+resources:
+  - https://github.com/cloudnative-pg/plugin-barman-cloud/releases/download/v0.12.0/manifest.yaml

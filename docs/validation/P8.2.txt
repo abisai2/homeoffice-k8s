@@ -1,0 +1,50 @@
+P8.2 — cluster-shutdown.sh / cluster-startup.sh (weekly Veeam cold-image window)
+================================================================================
+Date: 2026-06-04
+Exit-verify: dry-run/documented; 🚦 a REAL shutdown is gated (run by the operator only
+during an actual Veeam window). Scripts authored + lint-clean + dry-run exercised.
+
+Deliverables:
+  scripts/cluster-shutdown.sh   — graceful cold-shutdown
+  scripts/cluster-startup.sh    — ordered power-on
+  (Taskfile `shutdown` / `startup` wrappers already pointed at these paths.)
+
+--- Why / design --------------------------------------------------------------------------
+Goal: a crash-consistent, powered-off VM set so Veeam can image clean disks, then a clean
+bring-up. Graceful OS halt (talosctl), NOT govc hard power-off, so etcd + Longhorn + PG
+flush. Power-ON is govc (the OS is off). Cordon EVERYTHING first so drained pods terminate
+in place instead of churning across shrinking worker capacity.
+
+shutdown order: preflight (6 Ready / etcd 3 / API) -> cordon all 6 -> CNPG declarative
+  hibernation (cnpg.io/hibernation=on, clean PG shutdown, wait pods gone) -> drain workers
+  (--ignore-daemonsets --delete-emptydir-data --force, Longhorn volumes detach) -> wait all
+  volumes state=detached -> talosctl shutdown --force workers -> talosctl shutdown --force
+  control planes (.31 last) -> confirm runtime.powerState=poweredOff via govc.
+  All kubectl steps run while etcd still has quorum (before any CP halt).
+
+startup order: govc vm.power -on control planes -> wait Talos API (apid :50000) -> wait
+  etcd 3 members + kube /readyz on the VIP -> power on workers -> wait API -> wait 6 Ready
+  -> uncordon all -> CNPG hibernation=off -> wait readyInstances=3 -> verify (nodes / Argo /
+  etcd / Longhorn). CPs first so etcd quorum + apiserver are live before workers rejoin.
+
+Key facts used (verified live, read-only, 2026-06-04):
+  - talosctl shutdown: WITHOUT --force it cordons/drains itself; we drain explicitly first
+    and pass --force (+ --wait=false; node halts, API dies — confirm via govc instead).
+  - govc power read: `govc object.collect -s <vmpath> runtime.powerState` -> poweredOn/Off;
+    guests have vmtools running (guestToolsRunning) so the halt powers the VM off.
+  - VMs: /ap169home-dc/vm/Kubernetes/{k8s-cp1..3,k8s-worker1..3}; power-on = govc vm.power -on.
+  - CNPG pods carry label cnpg.io/cluster=postgres (postgres-1/2/3); operator 1.29.1 supports
+    declarative hibernation; drain is the backstop if hibernation no-ops.
+  - Longhorn volume readiness via .status.state (attached/detached); 4 volumes attached.
+  - etcd member count via `talosctl etcd members | grep -c 172.16.23.` = 3.
+
+--- Verification --------------------------------------------------------------------------
+  bash -n scripts/cluster-shutdown.sh scripts/cluster-startup.sh   -> syntax OK
+  shellcheck scripts/cluster-shutdown.sh scripts/cluster-startup.sh -> clean
+  ./scripts/cluster-shutdown.sh --dry-run   -> prints the full plan, touches nothing
+  ./scripts/cluster-startup.sh  --dry-run   -> prints the full plan, touches nothing
+  (--dry-run echoes every mutating command and skips the wait/poll loops; no cluster or
+  vCenter changes.)
+
+NOT run: the real shutdown/startup (gated). A live exercise belongs to P9 (DR validation),
+where a controlled shutdown→Veeam→startup cycle can be observed end-to-end.

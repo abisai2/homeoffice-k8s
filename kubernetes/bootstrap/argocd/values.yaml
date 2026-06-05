@@ -1,0 +1,45 @@
+# Helm values for the argo-cd chart, wired for KSOPS so Argo can decrypt
+# *.sops.yaml from this repo at render time. Installed by scripts/bootstrap.sh:
+#   helm install argocd argo/argo-cd -n argocd --create-namespace -f values.yaml
+---
+global:
+  domain: "argocd.k8s-talos1.ap169homeoffice.net"
+
+configs:
+  cm:
+    # Allow kustomize KSOPS exec plugin + helm chart inflation in kustomize.
+    kustomize.buildOptions: "--enable-alpha-plugins --enable-exec --enable-helm"
+  params:
+    # TLS is terminated at the Cilium Gateway; run the API server plaintext inside.
+    server.insecure: "true"
+
+repoServer:
+  # 1) Stage the ksops + kustomize binaries into a shared volume.
+  initContainers:
+    - name: install-ksops
+      # Official KSOPS image (note: viaductoss, not viaduct) — installs the ksops
+      # exec plugin + a matching kustomize into the shared volume.
+      image: viaductoss/ksops:v4.5.1
+      command: ["/usr/local/bin/ksops", "install", "--with-kustomize", "/custom-tools"]
+      volumeMounts:
+        - mountPath: /custom-tools
+          name: custom-tools
+  volumes:
+    - name: custom-tools
+      emptyDir: {}
+    # 2) Mount the age private key (created out-of-band as secret `sops-age`).
+    - name: sops-age
+      secret:
+        secretName: sops-age
+  volumeMounts:
+    - mountPath: /usr/local/bin/kustomize
+      name: custom-tools
+      subPath: kustomize
+    - mountPath: /usr/local/bin/ksops
+      name: custom-tools
+      subPath: ksops
+    - mountPath: /home/argocd/.config/sops/age
+      name: sops-age
+  env:
+    - name: SOPS_AGE_KEY_FILE
+      value: /home/argocd/.config/sops/age/keys.txt

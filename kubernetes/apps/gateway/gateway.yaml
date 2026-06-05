@@ -1,0 +1,33 @@
+# Shared cluster Gateway (GatewayClass cilium). Cilium honors spec.addresses
+# (type IPAddress) to pin the LB-IPAM IP to .120 — the first address in the
+# Cilium LB pool (.120-.139). Internal DNS (Technitium) points the wildcard
+# host at this IP. The HTTPS listener allows routes from ALL namespaces so each
+# platform app attaches its own HTTPRoute to this one Gateway.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: main
+spec:
+  gatewayClassName: cilium
+  addresses:
+    - type: IPAddress
+      value: 172.16.23.120
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same          # only the in-namespace HTTP->HTTPS redirect attaches here
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: "*.k8s-talos1.ap169homeoffice.net"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: wildcard-tls   # produced by the wildcard Certificate below
+      allowedRoutes:
+        namespaces:
+          from: All

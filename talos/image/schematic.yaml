@@ -1,0 +1,21 @@
+# Talos Image Factory schematic — single source of truth for the node image.
+# This is the canonical extension set baked into both the OVA template (new VMs)
+# and the installer image (`machine.install.image` in talos/patches/common.yaml).
+#
+# Extensions:
+#   siderolabs/iscsi-tools         — iSCSI initiator for Longhorn (P7.3)
+#   siderolabs/util-linux-tools    — minimal util-linux for Longhorn (P7.3)
+#   siderolabs/vmtoolsd-guest-agent— talos-vmtoolsd: makes vCenter show guest
+#                                    IP/hostname + heartbeat + power control.
+#                                    (open-vm-tools is always reported "guest-managed";
+#                                    what this enables is the RUNNING state.)
+#
+# Create / refresh the content-addressable schematic ID:
+#   scripts/talos-image.sh schematic   # POST this file to factory.talos.dev -> prints ID
+# The resulting ID feeds: talos/patches/common.yaml (installer) and the OVA URL.
+customization:
+  systemExtensions:
+    officialExtensions:
+      - siderolabs/iscsi-tools
+      - siderolabs/util-linux-tools
+      - siderolabs/vmtoolsd-guest-agent

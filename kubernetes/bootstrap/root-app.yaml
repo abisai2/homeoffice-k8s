@@ -1,0 +1,36 @@
+# App-of-apps. Applied once after Argo CD is installed:
+#   kubectl apply -f kubernetes/bootstrap/root-app.yaml
+# It reads ONLY the manifests directly under kubernetes/apps/ (recurse: false) —
+# a single ApplicationSet (platform-appset.yaml) that generates one Application
+# per component, each pointing at its own self-contained kustomize directory.
+#
+# Versioning: this is the TOP-LEVEL pin. Keep it in lockstep with the
+# ApplicationSet's targetRevision — bump both via scripts/release.sh, then
+# advance the live cluster with `argocd app set root --revision vX.Y.Z`.
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: "git@github.com:abisai2/homeoffice-k8s.git"   # SSH: private repo, read-only deploy key (secret repo-homeoffice-k8s)
+    targetRevision: v0.1.2
+    path: kubernetes/apps
+    directory:
+      recurse: false
+      include: "*.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

@@ -1,0 +1,17 @@
+generating PKI and tokens
+Created /tmp/claude-1000/tmp.kQd9XhByuk/controlplane.yaml
+Created /tmp/claude-1000/tmp.kQd9XhByuk/worker.yaml
+Created /tmp/claude-1000/tmp.kQd9XhByuk/talosconfig
+talos/clusterconfig/k8s-talos1-k8s-cp1.yaml is valid for metal mode
+  generated + validated talos/clusterconfig/k8s-talos1-k8s-cp1.yaml (k8s-cp1 @ 172.16.23.31)
+talos/clusterconfig/k8s-talos1-k8s-cp2.yaml is valid for metal mode
+  generated + validated talos/clusterconfig/k8s-talos1-k8s-cp2.yaml (k8s-cp2 @ 172.16.23.32)
+talos/clusterconfig/k8s-talos1-k8s-cp3.yaml is valid for metal mode
+  generated + validated talos/clusterconfig/k8s-talos1-k8s-cp3.yaml (k8s-cp3 @ 172.16.23.33)
+talos/clusterconfig/k8s-talos1-k8s-worker1.yaml is valid for metal mode
+  generated + validated talos/clusterconfig/k8s-talos1-k8s-worker1.yaml (k8s-worker1 @ 172.16.23.34)
+talos/clusterconfig/k8s-talos1-k8s-worker2.yaml is valid for metal mode
+  generated + validated talos/clusterconfig/k8s-talos1-k8s-worker2.yaml (k8s-worker2 @ 172.16.23.35)
+talos/clusterconfig/k8s-talos1-k8s-worker3.yaml is valid for metal mode
+  generated + validated talos/clusterconfig/k8s-talos1-k8s-worker3.yaml (k8s-worker3 @ 172.16.23.36)
+  wrote talos/clusterconfig/talosconfig (endpoints: 172.16.23.31 172.16.23.32 172.16.23.33 172.16.23.34 172.16.23.35 172.16.23.36)

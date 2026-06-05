@@ -1,0 +1,24 @@
+P7.9 pre-cut re-lint — 2026-06-04T19:35:37Z
+kustomize build --enable-alpha-plugins --enable-exec --enable-helm (KSOPS) + kubeconform -k 8s 1.36.1
+(summaries only — rendered Secret values are NOT recorded)
+
+kubernetes/apps/authentik/               secrets:clean   Summary: 14 resources found parsing stdin - Valid: 13, Invalid: 0, Errors: 0, Skipped: 1
+kubernetes/apps/barman-cloud-plugin/     secrets:clean   Summary: 17 resources found parsing stdin - Valid: 13, Invalid: 0, Errors: 0, Skipped: 4
+kubernetes/apps/cert-manager/            secrets:clean   Summary: 55 resources found parsing stdin - Valid: 47, Invalid: 0, Errors: 0, Skipped: 8
+kubernetes/apps/cilium/                  secrets:clean   Summary: 37 resources found parsing stdin - Valid: 34, Invalid: 0, Errors: 0, Skipped: 3
+kubernetes/apps/cnpg-cluster/            secrets:clean   Summary: 6 resources found parsing stdin - Valid: 2, Invalid: 0, Errors: 0, Skipped: 4
+kubernetes/apps/cnpg-operator/           secrets:MARKER! Summary: 21 resources found parsing stdin - Valid: 11, Invalid: 0, Errors: 0, Skipped: 10
+kubernetes/apps/etcd-backup/             secrets:clean   Summary: 4 resources found parsing stdin - Valid: 4, Invalid: 0, Errors: 0, Skipped: 0
+kubernetes/apps/gateway/                 secrets:clean   Summary: 3 resources found parsing stdin - Valid: 0, Invalid: 0, Errors: 0, Skipped: 3
+kubernetes/apps/longhorn/                secrets:clean   Summary: 47 resources found parsing stdin - Valid: 24, Invalid: 0, Errors: 0, Skipped: 23
+kubernetes/apps/velero/                  secrets:clean   Summary: 14 resources found parsing stdin - Valid: 12, Invalid: 0, Errors: 0, Skipped: 2
+
+components with placeholder markers in render: 1
+
+NOTE: cnpg-operator "MARKER!" is a FALSE POSITIVE — the strings matched are CNPG
+CRD field *descriptions* (e.g. "support for placeholder expansion", "${image_root}
+placeholder resolves to..."), not secret values. cnpg-operator has no secrets / no
+sops refs. All 8 actual *.sops.yaml decrypt to real values with 0 REPLACE markers.
+
+RESULT: 10/10 components render with KSOPS; kubeconform 0 Invalid / 0 Errors
+(Skipped = CRDs without schemas). Pre-cut lint gate PASSED.

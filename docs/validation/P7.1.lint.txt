@@ -1,0 +1,18 @@
+# P7.1 cert-manager lint (2026-06-04)
+chart jetstack/cert-manager v1.20.2; crds.enabled=true; split-horizon extraArgs
+(--dns01-recursive-nameservers-only --dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53).
+
+Render: kustomize build --enable-alpha-plugins --enable-exec --enable-helm kubernetes/apps/cert-manager
+  (KSOPS decrypts secret.sops.yaml -> cert-manager/cloudflare-api-token-secret)
+Objects: 2 ClusterIssuer (letsencrypt-staging, letsencrypt-prod), 6 CRD, 3 Deployment
+  (controller/webhook/cainjector), 1 Secret, + RBAC/SA/Service/etc.
+
+kubeconform -kubernetes-version 1.36.1 -ignore-missing-schemas -summary:
+  Summary: 55 resources found in 1 file - Valid: 47, Invalid: 0, Errors: 0, Skipped: 8
+  (Skipped 8 = 6 cert-manager CRDs + 2 ClusterIssuer CRs — no kubeconform schema)
+
+OPERATOR INPUTS REQUIRED before P7.9 sync:
+  - Real Cloudflare API token (Zone:DNS:Edit + Zone:Zone:Read on ap169homeoffice.net):
+      task sops:edit -- kubernetes/apps/cert-manager/secret.sops.yaml   # replace REPLACE_WITH_REAL_CLOUDFLARE_TOKEN
+      (also add it to ~/.credentials/ + the credentials README map)
+  - ACME email in cluster-issuer.yaml (placeholder admin@ap169homeoffice.net).

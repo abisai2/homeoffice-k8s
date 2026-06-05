@@ -1,0 +1,17 @@
+# Wildcard cert for the cluster's apps, issued via cert-manager DNS-01 (Cloudflare).
+# cert-manager writes the keypair into Secret `wildcard-tls` (same namespace), which
+# the Gateway's HTTPS listener references.
+#
+# Issuer is letsencrypt-prod. Staging validated the split-horizon DNS-01 flow end-to-end
+# (cert issued Ready at P7.9); flipped to prod for the real trusted cert.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-k8s-talos1
+spec:
+  secretName: wildcard-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.k8s-talos1.ap169homeoffice.net"

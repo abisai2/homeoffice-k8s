@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+helmCharts:
+  - name: longhorn
+    repo: https://charts.longhorn.io
+    releaseName: longhorn
+    version: "1.12.0"
+    namespace: longhorn-system
+    valuesFile: values.yaml
+resources:
+  - namespace.yaml          # longhorn-system w/ privileged PSS label (Talos enforces baseline)
+  - storageclass-replica1.yaml
+  - recurringjob-daily-backup.yaml   # daily volume backup → Wasabi (P8: was deferred from P7.3)
+# Wasabi S3 backup credential (longhorn-system) — see secret.example.yaml.
+generators:
+  - secret-generator.yaml

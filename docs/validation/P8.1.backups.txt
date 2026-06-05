@@ -1,0 +1,93 @@
+P8.1 — verify each backup layer lands in Wasabi (homeoffice-k8s-backups)
+========================================================================
+Date: 2026-06-04
+Bucket: s3://homeoffice-k8s-backups   endpoint: s3.us-east-1.wasabisys.com (Wasabi us-east-1)
+Method: read-only readiness survey (Claude) + operator-run on-demand triggers
+        (~/scripts/p8.1-verify-backups.sh, ~/scripts/p8.1-etcd-verify.sh) — in-cluster
+        mutations are harness-gated, so triggers were operator-executed; objects then
+        confirmed read-only against Wasabi.
+
+RESULT: all 4 layers verified landing in Wasabi.
+
+  Layer     | Trigger result                         | Wasabi prefix      | Fix needed
+  ----------|----------------------------------------|--------------------|-------------------------
+  longhorn  | Snapshot+Backup state=Completed        | longhorn/  17 objs | YES (target key + patch)
+  cnpg      | Backup phase=completed (base + WALs)   | cnpg/      base+33 | no (already archiving)
+  velero    | Backup Completed, 879 items            | velero/    9 objs  | no
+  etcd      | snapshot 16,945,184 B uploaded         | etcd/      1 obj   | YES (--nodes)
+
+--- Readiness baseline (read-only) -------------------------------------------------------
+- Cluster 6/6 Ready; all 11 Argo apps Synced/Healthy.
+- Baseline object counts: longhorn/=0, cnpg/=24 (WAL archiving already live), velero/=0, etcd/=0.
+- CNPG ScheduledBackup postgres-daily present (never fired); BSL velero/default Available;
+  etcd-backup CronJob + both secrets present. Daily schedules (etcd 01:00 / cnpg 02:00 /
+  velero 03:00) had not fired since the platform came up the same day.
+
+--- Longhorn (DEFECT FOUND + FIXED) ------------------------------------------------------
+Symptom: default BackupTarget available=false, "backup target URL is empty"; spec.backupTargetURL="".
+Root cause: values.yaml set defaultSettings.backupTarget / .backupTargetCredentialSecret, but
+  Longhorn 1.12 REMOVED the legacy `backup-target` setting (live: settings.longhorn.io
+  "backup-target" not found) and moved the target to the BackupTarget CRD, seeded from the
+  chart key `defaultBackupStore.*` -> ConfigMap longhorn-default-resource
+  (templates/default-resource.yaml). The defaultSettings.* keys were silently ignored.
+Fix (IaC): values.yaml defaultSettings -> defaultBackupStore (chart-native). Render now emits
+  longhorn-default-resource with:
+    backup-target: s3://homeoffice-k8s-backups@us-east-1/longhorn/
+    backup-target-credential-secret: longhorn-backup-credential
+  kustomize build --enable-helm --enable-alpha-plugins --enable-exec kubernetes/apps/longhorn
+  kubeconform 1.36.1: 48 resources, Valid 24 / Invalid 0 / Errors 0 / Skipped 24.
+Live catch-up (one-time, operator): the seed ConfigMap is consumed only at first boot, and the
+  default BackupTarget was already seeded empty -> patched the live CR:
+    spec.backupTargetURL = s3://homeoffice-k8s-backups@us-east-1/longhorn/
+    spec.credentialSecret = longhorn-backup-credential
+  -> status.available=true within ~5s. (Same IaC-fix + one-time-live-catch-up pattern used
+  for the gateway-api fix at P3.2.) Credential secret keys present: AWS_ACCESS_KEY_ID,
+  AWS_SECRET_ACCESS_KEY, AWS_ENDPOINTS.
+Recurring schedule (was "deferred to P8" in P7.3): added RecurringJob daily-backup
+  (kubernetes/apps/longhorn/recurringjob-daily-backup.yaml): task=backup, groups=[default]
+  (all volumes carry recurring-job-group.longhorn.io/default=enabled), cron "0 4 * * *",
+  retain 7, concurrency 2. Longhorn was the only layer lacking a daily schedule.
+On-demand verify (operator): snapshot+backup of authentik-media volume
+  (pvc-3494175d-0451-4565-ab9d-253a4077f12a) -> backup.state=Completed; 17 objects under
+  longhorn/backupstore/volumes/.../pvc-3494.../ (blocks + volume.cfg).
+
+--- CNPG (no change) ---------------------------------------------------------------------
+WAL archiving via barman-cloud-plugin already live at baseline (24 WAL objs). On-demand
+Backup CR (method=plugin, pluginConfiguration.name=barman-cloud.cloudnative-pg.io, mirrors
+ScheduledBackup postgres-daily) -> status.phase=completed; cnpg/ grew 24 -> 33 (base + WALs).
+
+--- Velero (no change) -------------------------------------------------------------------
+velero backup create --wait -> Phase=Completed, 879 items backed up (resources-only by
+design: deployNodeAgent=false / snapshotsEnabled=false — Longhorn+CNPG own volume data).
+9 objects under velero/backups/<name>/ incl. <name>.tar.gz (1,668,716 B).
+
+--- etcd-backup (DEFECT FOUND + FIXED) ---------------------------------------------------
+Symptom (first real run): job timed out; talosctl printed `etcd snapshot <path>` usage.
+Root cause: scoped talosconfig (secret-talosconfig.sops.yaml, role os:etcd:backup) has
+  endpoints (.31/.32/.33) but NO `nodes:`, and cronjob.yaml passed no -n. `talosctl etcd
+  snapshot` targets exactly one node -> errors "nodes are not set for the command" and prints
+  usage (a cobra arg-level error; runtime errors are silenced, so usage => arg error).
+Reproduced locally with the actual scoped config (etcd snapshot is read-only):
+  Repro 2  (scoped cfg, no -n)      -> "nodes are not set for the command" + usage  (matches)
+  Repro 2b (scoped cfg, -n .31)     -> "etcd snapshot saved ... (16945184 bytes)"   (works)
+Fix (IaC): cronjob.yaml snapshot initContainer args add `--nodes=172.16.23.31` (any single CP;
+  all etcd members hold identical data). Render kubeconform 1.36.1: 4 resources, Valid 4 /
+  Invalid 0; `--nodes=172.16.23.31` confirmed in rendered CronJob args.
+On-demand verify (operator): standalone one-off Job with the corrected args
+  (~/scripts/p8.1-etcd-verify.sh) -> snapshot saved (16,945,184 B, 1153 keys) -> uploaded ->
+  etcd/etcd-20260605T003936Z.snapshot (16,945,184 B) present in Wasabi.
+
+--- IaC changes (working tree, build branch, uncommitted at time of evidence) ------------
+  M kubernetes/apps/etcd-backup/cronjob.yaml          (+--nodes=172.16.23.31)
+  M kubernetes/apps/longhorn/kustomization.yaml       (+recurringjob-daily-backup.yaml)
+  M kubernetes/apps/longhorn/values.yaml              (defaultSettings -> defaultBackupStore)
+  ?? kubernetes/apps/longhorn/recurringjob-daily-backup.yaml  (new)
+
+--- LIVE-vs-GIT follow-up (important) ----------------------------------------------------
+The running cluster is patched for Longhorn (backup target set live) and was verified for all
+4 layers via one-off backups. BUT the Argo-managed daily schedules still run the OLD git
+revision (v0.1.1): the live etcd-backup CronJob keeps the buggy args and the longhorn
+RecurringJob does not exist live until these fixes are committed and a new release is cut +
+synced. Until then the nightly etcd CronJob (01:00) will keep failing and there is no nightly
+longhorn backup. -> cut a release (release.sh patch -> v0.1.2), operator pushes + tags, Argo
+syncs. The one-off verification objects were cleaned up by the operator after each run.

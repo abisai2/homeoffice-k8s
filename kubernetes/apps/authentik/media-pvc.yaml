@@ -1,0 +1,14 @@
+# Shared media volume (RWX) so the authentik server + worker — spread across workers —
+# both mount /media. Longhorn provides RWX via its share-manager. Uses the default
+# replica-3 `longhorn` SC (durable; media is not regenerable like cache).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: authentik-media
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi

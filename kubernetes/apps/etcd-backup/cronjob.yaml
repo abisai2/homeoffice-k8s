@@ -1,0 +1,75 @@
+# Talos-native etcd snapshot -> Wasabi, daily. The snapshot is taken over the Talos
+# API (apid) with a LEAST-PRIVILEGE talosconfig (role os:etcd:backup), then uploaded.
+# The talosctl image is distroless (no shell), so its args are shell-free and the
+# date-stamped object key is built in the aws-cli container (which has a shell).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-backup
+spec:
+  schedule: "0 1 * * *"          # 01:00 daily (standard 5-field cron)
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          serviceAccountName: etcd-backup
+          automountServiceAccountToken: false   # never touches the k8s API
+          securityContext:                       # satisfy the restricted Pod Security Standard
+            runAsNonRoot: true
+            runAsUser: 65532                      # both images default to root; run them as non-root
+            runAsGroup: 65532
+            fsGroup: 65532                        # share the emptyDir between containers
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: snapshot
+              image: ghcr.io/siderolabs/talosctl:v1.13.3
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              args:
+                - --talosconfig=/tc/talosconfig  # endpoints live in this scoped config
+                # `etcd snapshot` targets ONE node; the scoped talosconfig sets endpoints
+                # but no default node, so a node MUST be named or talosctl errors
+                # ("nodes are not set for the command") and prints usage. Any single CP
+                # works — every etcd member holds identical data.
+                - --nodes=172.16.23.31
+                - etcd
+                - snapshot
+                - /backup/etcd.snapshot
+              volumeMounts:
+                - { name: talosconfig, mountPath: /tc, readOnly: true }
+                - { name: backup, mountPath: /backup }
+          containers:
+            - name: upload
+              image: amazon/aws-cli:2.34.61
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  aws s3 cp /backup/etcd.snapshot \
+                    "s3://homeoffice-k8s-backups/etcd/etcd-$(date -u +%Y%m%dT%H%M%SZ).snapshot" \
+                    --endpoint-url https://s3.us-east-1.wasabisys.com
+              env:
+                - { name: HOME, value: /tmp }     # non-root has no writable home; aws-cli may cache
+                - { name: AWS_DEFAULT_REGION, value: us-east-1 }
+              envFrom:
+                - secretRef: { name: etcd-backup-wasabi }
+              volumeMounts:
+                - { name: backup, mountPath: /backup }
+          volumes:
+            - name: talosconfig
+              secret:
+                secretName: etcd-backup-talosconfig
+            - name: backup
+              emptyDir: {}

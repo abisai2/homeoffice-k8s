@@ -1,0 +1,17 @@
+# P2.3 evidence — etcd bootstrap + cluster bring-up (captured 2026-06-04T02:59:01Z)
+# bootstrap run once on cp1 (172.16.23.31) by operator; verified read-only from mgmt01.
+
+## talosctl etcd members (expect 3)
+NODE           ID                 HOSTNAME   PEER URLS                   CLIENT URLS                 LEARNER
+172.16.23.31   036706f723732bfd   k8s-cp2    https://172.16.23.32:2380   https://172.16.23.32:2379   false
+172.16.23.31   4097c4b439ac1524   k8s-cp1    https://172.16.23.31:2380   https://172.16.23.31:2379   false
+172.16.23.31   c04f49d715814eee   k8s-cp3    https://172.16.23.33:2380   https://172.16.23.33:2379   false
+
+## kubectl get nodes -o wide (expect 6, NotReady: no CNI yet)
+NAME          STATUS     ROLES           AGE    VERSION   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE          KERNEL-VERSION          CONTAINER-RUNTIME
+k8s-cp1       NotReady   control-plane   107s   v1.36.1   172.16.23.31   <none>        Talos (v1.13.3)   6.18.33-talos (amd64)   containerd://2.2.4
+k8s-cp2       NotReady   control-plane   108s   v1.36.1   172.16.23.32   <none>        Talos (v1.13.3)   6.18.33-talos (amd64)   containerd://2.2.4
+k8s-cp3       NotReady   control-plane   111s   v1.36.1   172.16.23.33   <none>        Talos (v1.13.3)   6.18.33-talos (amd64)   containerd://2.2.4
+k8s-worker1   NotReady   <none>          114s   v1.36.1   172.16.23.34   <none>        Talos (v1.13.3)   6.18.33-talos (amd64)   containerd://2.2.4
+k8s-worker2   NotReady   <none>          114s   v1.36.1   172.16.23.35   <none>        Talos (v1.13.3)   6.18.33-talos (amd64)   containerd://2.2.4
+k8s-worker3   NotReady   <none>          113s   v1.36.1   172.16.23.36   <none>        Talos (v1.13.3)   6.18.33-talos (amd64)   containerd://2.2.4

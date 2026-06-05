@@ -1,0 +1,21 @@
+# P7.7 velero lint (2026-06-04)
+chart vmware-tanzu/velero 12.0.2 (velero appVersion 1.18.1; kubeVersion >=1.16 -> 1.36 OK).
+AWS plugin velero/velero-plugin-for-aws:v1.14.1 (velero 1.17->plugin 1.13, so 1.18->1.14;
+upstream README compat matrix lags — confirm at P7.9 if needed).
+
+Scope: velero backs up Kubernetes RESOURCES to Wasabi only. Volume DATA is covered by
+Longhorn (P7.3) and CNPG (P7.5), so deployNodeAgent=false, snapshotsEnabled=false,
+volumeSnapshotLocation=[]. No double-backup of PV data.
+
+Render: kustomize build --enable-alpha-plugins --enable-exec --enable-helm kubernetes/apps/velero -> 14 docs.
+  - BackupStorageLocation default: provider aws, bucket homeoffice-k8s-backups, prefix velero,
+    config{region us-east-1, s3Url https://s3.us-east-1.wasabisys.com, s3ForcePathStyle "true"}.
+  - Deployment initContainer velero/velero-plugin-for-aws:v1.14.1 (mounts /target -> plugins).
+  - Schedule velero-daily: schedule "0 3 * * *" (velero uses STANDARD 5-field cron), ttl 720h
+    (30d), snapshotVolumes false, storageLocation default.
+  - KSOPS Secret velero-credentials (key `cloud` = AWS credentials file).
+  Prometheus ServiceMonitor/PodMonitor/PrometheusRule NOT rendered (value-gated off; no metrics stack).
+
+kubeconform 1.36.1: Valid 12 / Invalid 0 / Skipped 2 (BackupStorageLocation + Schedule CRs).
+
+OPERATOR before P7.9: real Wasabi keys -> task sops:edit -- kubernetes/apps/velero/secret.sops.yaml

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits"
+  ],
+  "description": "Dependency updates for homeoffice-k8s. NOTE: manager config is verified/refined at checkpoint P7 against current Renovate docs (see docs/VERIFIED-VERSIONS.md).",
+  "enabledManagers": [
+    "terraform",
+    "kustomize",
+    "helm-values",
+    "argocd",
+    "custom.regex"
+  ],
+  "labels": ["dependencies"],
+  "schedule": ["* 0-6 * * 1"],
+  "packageRules": [
+    {
+      "description": "Group Talos toolchain bumps for a single review",
+      "matchPackageNames": ["siderolabs/talos"],
+      "groupName": "talos"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Talos version pinned in terraform.tfvars",
+      "managerFilePatterns": ["/terraform/terraform\\.tfvars$/"],
+      "matchStrings": ["talos_version\\s*=\\s*\"(?<currentValue>v[0-9.]+)\""],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "siderolabs/talos"
+    }
+  ]
+}

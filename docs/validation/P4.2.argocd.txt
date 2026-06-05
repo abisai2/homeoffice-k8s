@@ -1,0 +1,25 @@
+# P4.2 — secrets + Argo CD + root-app — verified 2026-06-04T14:13:31Z
+
+## argocd pods (all Running; repo-server carries KSOPS)
+NAME                                                READY   STATUS    RESTARTS   AGE
+argocd-application-controller-0                     1/1     Running   0          11m
+argocd-applicationset-controller-79976c48f8-grxrr   1/1     Running   0          11m
+argocd-dex-server-6f9668ccc8-cw6f4                  1/1     Running   0          11m
+argocd-notifications-controller-656b5d9c88-jwb6m    1/1     Running   0          11m
+argocd-redis-7fb4697dff-vv7tz                       1/1     Running   0          11m
+argocd-repo-server-7b8d54579f-bhq8k                 1/1     Running   0          11m
+argocd-server-64b78f6c77-jrsd7                      1/1     Running   0          11m
+
+## repo-server init containers (KSOPS install — Completed exit 0)
+copyutil exitCode=0 reason=Completed
+install-ksops exitCode=0 reason=Completed
+
+## secrets
+NAME                  TYPE     DATA   AGE
+sops-age              Opaque   1      11m
+repo-homeoffice-k8s   Opaque   3      11m
+
+## root application (present; Unknown sync = remote empty until push/tag — NOT an auth error)
+NAME   SYNC STATUS   HEALTH STATUS   REVISION   PROJECT
+root   Unknown       Healthy         v0.1.0     default
+condition: Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = Unknown desc = failed to list refs: remote repository is empty

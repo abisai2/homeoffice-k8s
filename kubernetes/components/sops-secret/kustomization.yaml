@@ -1,0 +1,6 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# The generator emits the decrypted Secret. An app that needs other resources adds
+# them under `resources:` alongside this `generators:` entry.
+generators:
+  - secret-generator.yaml

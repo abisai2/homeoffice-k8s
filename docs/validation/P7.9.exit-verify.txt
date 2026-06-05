@@ -1,0 +1,25 @@
+P7.9 exit-verify — 2026-06-04T22:52:26Z
+=== Argo Applications (root + 10 components) ===
+authentik             Synced   Healthy   build
+barman-cloud-plugin   Synced   Healthy   build
+cert-manager          Synced   Healthy   build
+cilium                Synced   Healthy   build
+cnpg-cluster          Synced   Healthy   build
+cnpg-operator         Synced   Healthy   build
+etcd-backup           Synced   Healthy   build
+gateway               Synced   Healthy   build
+longhorn              Synced   Healthy   build
+NAME                  SYNC     HEALTH    REV
+root                  Synced   Healthy   build
+velero                Synced   Healthy   build
+
+=== wildcard Certificate (gateway) ===
+NAME                                              READY   SECRET         AGE
+certificate.cert-manager.io/wildcard-k8s-talos1   True    wildcard-tls   167m
+
+NAME                                                       APPROVED   DENIED   READY   ISSUER                REQUESTER                                         AGE
+certificaterequest.cert-manager.io/wildcard-k8s-talos1-1   True                True    letsencrypt-staging   system:serviceaccount:cert-manager:cert-manager   167m
+
+=== Gateway main: programmed + assigned address ===
+Accepted=True Programmed=True 
+ addr: 172.16.23.120

@@ -1,0 +1,16 @@
+# replica-1 StorageClass for volumes already replicated at the app layer (e.g.
+# CloudNativePG's own 3-instance replication — avoids double-replication) or for
+# scratch/regenerable data. The default `longhorn` SC stays replica-3.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: longhorn-r1
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+parameters:
+  numberOfReplicas: "1"
+  staleReplicaTimeout: "30"
+  fsType: "ext4"
+  dataLocality: "disabled"

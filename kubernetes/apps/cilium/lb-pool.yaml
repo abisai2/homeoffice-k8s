@@ -1,0 +1,12 @@
+# Pool of IPs Cilium hands to LoadBalancer Services (the Gateway gets the first).
+# Free range on the node L2 segment (VLAN 23): 172.16.23.120-139.
+# apiVersion v2: CiliumLoadBalancerIPPool was promoted from v2alpha1 to v2 in 1.16+
+# (v2alpha1 still served but deprecated) — verified against cilium v1.19.4.
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: default-pool
+spec:
+  blocks:
+    - start: "172.16.23.120"
+      stop: "172.16.23.139"

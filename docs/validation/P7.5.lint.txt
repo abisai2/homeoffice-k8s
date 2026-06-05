@@ -1,0 +1,34 @@
+# P7.5 cnpg-cluster + barman-cloud-plugin lint (2026-06-04)
+Operator chose the Barman Cloud Plugin (recommended) over the deprecated in-tree
+spec.backup.barmanObjectStore (deprecated since CNPG 1.26). Adds a 10th appset component.
+
+== barman-cloud-plugin (new component, ns cnpg-system, sync-wave 3) ==
+kustomize references the pinned upstream release manifest (remote-ref works, like helm charts):
+  https://github.com/cloudnative-pg/plugin-barman-cloud/releases/download/v0.12.0/manifest.yaml
+Render: 17 docs (CRD objectstores.barmancloud.cnpg.io, Deployment image
+  ghcr.io/cloudnative-pg/plugin-barman-cloud:v0.12.0, Service, RBAC, SA, Secret,
+  2 cert-manager Certificate + 1 self-signed Issuer for the webhook).
+Requires cert-manager (wave -5, satisfied). kubeconform 1.36.1: Valid 13 / Invalid 0 / Skipped 4
+  (objectstores CRD + the cert-manager CRs).
+
+== cnpg-cluster (ns databases, sync-wave 10) ==
+Render (KSOPS): 4 docs in databases ns:
+  - Cluster/postgres: instances=3, storage longhorn-r1 10Gi, affinity
+    enablePodAntiAffinity=true podAntiAffinityType=preferred topologyKey=kubernetes.io/hostname,
+    plugins[barman-cloud.cloudnative-pg.io isWALArchiver parameters{barmanObjectName=wasabi-store,
+    serverName=postgres}], imageName omitted (operator default PG).
+  - ObjectStore/wasabi-store (barmancloud.cnpg.io/v1): retentionPolicy 30d; configuration
+    destinationPath s3://homeoffice-k8s-backups/cnpg/, endpointURL https://s3.us-east-1.wasabisys.com,
+    s3Credentials accessKeyId/secretAccessKey/region -> cnpg-backup-credential, wal+data compression gzip.
+  - ScheduledBackup/postgres-daily: schedule "0 0 2 * * *" (6-FIELD cron, seconds first), method plugin.
+  - Secret/cnpg-backup-credential (KSOPS): keys ACCESS_KEY_ID, ACCESS_SECRET_KEY, AWS_REGION.
+kubeconform 1.36.1: Valid 1 (Secret) / Invalid 0 / Skipped 3 (the 3 CNPG CRs).
+
+VERIFY notes: chart/operator 1.29.1; Cluster required field = only `instances`; imageName/imageCatalogRef
+mutually exclusive (both omitted -> default); affinity + plugins + ObjectStore + ScheduledBackup fields
+checked against the actual shipped CRDs. NOTE: the 3 CNPG CRs could NOT be server-dry-run (operator+plugin
+CRDs not installed live yet) -> validated by field-vs-CRD inspection + kubeconform structure; the operator's
+admission webhook will be the final schema check at P7.9 sync.
+
+OPERATOR before P7.9: real Wasabi keys -> task sops:edit -- kubernetes/apps/cnpg-cluster/secret.sops.yaml
+Storage size 10Gi/instance is a starting point (longhorn-r1 allowVolumeExpansion=true).

@@ -1,0 +1,12 @@
+P7.9 rollout fix — longhorn pre-upgrade hook + velero CRDs — 2026-06-04T20:29:00Z
+Root causes (live diagnosis vs Argo apps after the v0.1.0 sync):
+ - longhorn: pre-upgrade hook Job deadlocks (needs longhorn-service-account, a
+   Sync-phase resource gated behind the PreSync hook). Fix: preUpgradeChecker.jobEnabled=false
+   (Longhorn's own chart comment recommends this for Argo/GitOps).
+ - velero: CRDs ship in crds/ (excluded by kustomize helm by default) -> BSL/Schedule CR
+   dry-run fails 'CRD not found' and aborts the sync. Fix: includeCRDs=true + upgradeCRDs=false.
+
+longhorn   Summary: 46 resources found parsing stdin - Valid: 23, Invalid: 0, Errors: 0, Skipped: 23
+velero     Summary: 23 resources found parsing stdin - Valid: 8, Invalid: 0, Errors: 0, Skipped: 15
+
+longhorn: pre-upgrade Job removed; velero: 13 CRDs inline + upgrade-crds Job removed; BSL+Schedule retained.
