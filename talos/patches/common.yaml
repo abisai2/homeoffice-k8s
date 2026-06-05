@@ -7,3 +7,8 @@ machine:
   install:
     disk: /dev/sda
     image: factory.talos.dev/installer/a28d86375cf9debe952efbcbe8e2886cf0a174b1f4dd733512600a40334977d7:v1.13.3
+  time:
+    servers:
+      - 172.16.5.41          # Arista core switch — NTP server (stratum 2)
+      - 172.16.5.42          # Arista core switch — NTP server (stratum 3)
+      - time.cloudflare.com  # external fallback / 3rd source to break ties
