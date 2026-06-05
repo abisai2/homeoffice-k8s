@@ -26,6 +26,12 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
   recovery, Veeam whole-VM fallback) and `docs/deploy-validation-report.md` (build shakedown).
 
 ### Fixed
+- argocd: add the missing `HTTPRoute` (`kubernetes/bootstrap/argocd/httproute.yaml`) that
+  attaches `argocd.k8s-talos1.ap169homeoffice.net` to the Cilium Gateway's `https` listener,
+  and apply it from `bootstrap.sh`'s argocd step. The argo-cd chart sets `global.domain` +
+  `server.insecure` but creates no Gateway API route, so the host was never wired to the
+  Gateway and the UI returned a bare Envoy 404. (Argo CD is bootstrap-managed, not in the
+  ApplicationSet, so nothing self-healed it.)
 - docs: correct the Longhorn backup-target key in `VERIFIED-VERSIONS.md`
   (`defaultSettings.*` → `defaultBackupStore.*`, the actual Longhorn 1.12 key).
 

@@ -180,6 +180,10 @@ cmd_cluster() {
   helm upgrade --install argocd argo/argo-cd \
     -n argocd --version 9.5.17 -f "$ARGOCD_DIR/values.yaml" --wait --timeout 10m
 
+  echo ">> Argo CD HTTPRoute (attaches the UI host to the Cilium Gateway; the chart creates none)"
+  # Stays un-Accepted until the gateway app syncs the 'main' Gateway, then Cilium reconciles it.
+  kubectl apply -f "$ARGOCD_DIR/httproute.yaml"
+
   echo ">> root app-of-apps"
   # root-app + platform-appset pin targetRevision v0.1.0, which is not cut until P7.9.
   # Until then Argo reports 'revision v0.1.0 not found' for root — EXPECTED. P4.2 only
