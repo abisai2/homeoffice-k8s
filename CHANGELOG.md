@@ -14,6 +14,8 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-06-09
+
 ### Added
 - renovate: in-cluster self-hosted Renovate (`kubernetes/apps/renovate/`, wave 5) — a weekly
   CronJob (`renovate/renovate:43`, Mon 02:00 UTC, platform=github) that finally executes the
