@@ -1,0 +1,73 @@
+# Self-hosted Renovate for THIS repo (abisai2/homeoffice-k8s on github.com).
+# The repo-root renovate.json defines WHAT gets updated (kustomize helmCharts incl.
+# OCI ones like netbox, terraform providers, argocd pins, Talos via regex) and WHEN
+# (in-repo schedule "* 0-6 * * 1", UTC); this CronJob is just the executor and must
+# fire inside that window. The docker-services Renovate on appservices01 is a separate
+# instance (platform=gitea, docker-services-* only) and does not cover this repo.
+# Image: major tag :43 + pullPolicy Always — floats 43.x weekly, same convention as
+# the docker-services renovate compose (renovate self-updating its own pin would
+# otherwise need the kubernetes manager enabled in renovate.json).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: renovate
+spec:
+  schedule: "0 2 * * 1"          # Mon 02:00 UTC — inside renovate.json's 0-6 Mon window
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600
+      template:
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false   # talks to github.com only, never the k8s API
+          securityContext:                       # satisfy the restricted Pod Security Standard
+            runAsNonRoot: true
+            runAsUser: 12021                      # the renovate image's bundled non-root user
+            runAsGroup: 12021
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: renovate
+              image: renovate/renovate:43
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              env:
+                - name: RENOVATE_PLATFORM
+                  value: github
+                - name: RENOVATE_REPOSITORIES
+                  value: abisai2/homeoffice-k8s
+                - name: RENOVATE_ONBOARDING       # renovate.json already on main
+                  value: "false"
+                - name: RENOVATE_GIT_AUTHOR
+                  value: Renovate Bot <renovate@ap169homeoffice.net>
+                - name: RENOVATE_PR_HOURLY_LIMIT  # mirror the docker-services instance
+                  value: "0"
+                - name: RENOVATE_PR_CONCURRENT_LIMIT
+                  value: "10"
+                - name: RENOVATE_BASE_DIR
+                  value: /tmp/renovate
+                - name: LOG_LEVEL
+                  value: info
+                - name: RENOVATE_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: renovate-secrets
+                      key: RENOVATE_TOKEN
+              volumeMounts:
+                - { name: work, mountPath: /tmp/renovate }
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+                limits:
+                  memory: 1Gi
+          volumes:
+            - name: work          # scratch/cache only; cold cache weekly is fine
+              emptyDir: {}
