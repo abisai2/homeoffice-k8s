@@ -14,6 +14,16 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-06-09
+
+### Added
+- renovate: in-cluster self-hosted Renovate (`kubernetes/apps/renovate/`, wave 5) — a weekly
+  CronJob (`renovate/renovate:43`, Mon 02:00 UTC, platform=github) that finally executes the
+  repo's existing `renovate.json` against `abisai2/homeoffice-k8s`. Covers all kustomize
+  helmCharts pins (incl. the OCI netbox chart via the docker datasource), terraform providers,
+  argocd pins, and the Talos tfvars regex. Auth via the fine-grained GitHub PAT in the KSOPS
+  secret `renovate-secrets`. The appservices01 docker-services Renovate remains gitea-only.
+
 ## [0.1.4] - 2026-06-09
 
 ### Added
