@@ -15,6 +15,7 @@ The authoritative state lives on disk — start here:
 - **[`docs/PLAN.md`](docs/PLAN.md)** — the full phased bootstrap plan + checkpoint spec.
 - **[`docs/PROGRESS.md`](docs/PROGRESS.md)** — live build ledger (where we are right now).
 - **[`docs/VERIFIED-VERSIONS.md`](docs/VERIFIED-VERSIONS.md)** — upstream-verified version pins.
+- **[`docs/UPDATE-RUNBOOK.md`](docs/UPDATE-RUNBOOK.md)** — dependency-update flow (Renovate → review → release → sync).
 
 ## Stack
 
