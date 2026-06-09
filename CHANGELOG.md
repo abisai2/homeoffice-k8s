@@ -14,6 +14,8 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-06-09
+
 ### Added
 - netbox: NetBox IPAM/DCIM (`kubernetes/apps/netbox/`, chart 8.3.14 / app v4.6.2, first
   OCI-only chart in the repo) as a new appset component (wave 15, peer of authentik).
