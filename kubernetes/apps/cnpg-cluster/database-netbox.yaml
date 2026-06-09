@@ -1,0 +1,11 @@
+# Declarative `netbox` database in the postgres cluster, owned by the managed
+# `netbox` role (cluster.yaml). Used by NetBox (IPAM/DCIM).
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: netbox
+spec:
+  cluster:
+    name: postgres
+  name: netbox
+  owner: netbox

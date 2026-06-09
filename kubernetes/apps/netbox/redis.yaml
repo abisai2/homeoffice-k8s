@@ -1,0 +1,44 @@
+# Minimal Redis for netbox (cache + RQ task queue only — no persistent app data, so
+# no PVC; a restart just drops cache/queued jobs). Single replica. NetBox uses two
+# logical DBs on this one instance: tasks=0, caching=1 (values.yaml).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbox-redis
+  labels:
+    app.kubernetes.io/name: netbox-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: netbox-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: netbox-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          args: ["--save", "", "--appendonly", "no"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbox-redis
+spec:
+  selector:
+    app.kubernetes.io/name: netbox-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis

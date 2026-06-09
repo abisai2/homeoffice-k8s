@@ -19,7 +19,7 @@ spec:
   project: default
   source:
     repoURL: "git@github.com:abisai2/homeoffice-k8s.git"   # SSH: private repo, read-only deploy key (secret repo-homeoffice-k8s)
-    targetRevision: v0.1.3
+    targetRevision: v0.1.4
     path: kubernetes/apps
     directory:
       recurse: false
