@@ -14,6 +14,12 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+### Added
+- docs: `docs/UPDATE-RUNBOOK.md` — the dependency-update flow (in-cluster Renovate
+  detection → schedule-gated PRs + Dependency Dashboard → human review incl. the two
+  offline-render hazard checks + VERIFIED-VERSIONS row → release tag → root-app apply),
+  with the Talos-PR-is-an-OS-upgrade caveat. Linked from the README docs index.
+
 ## [0.1.5] - 2026-06-09
 
 ### Added
