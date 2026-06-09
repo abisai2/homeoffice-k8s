@@ -1,0 +1,88 @@
+# netbox chart values (chart 8.3.14, app v4.6.2).
+# OFFLINE-RENDER NOTE: this chart has NO .Capabilities object gates, but its
+# secret.yaml random-generates secret_key / superuser password+api_token /
+# api_token_peppers via `lookup` when no existingSecret is set — under offline
+# `kustomize build --enable-helm` that means NEW values on EVERY render
+# (permanent OutOfSync + credential churn). All three existingSecret knobs below
+# point at the KSOPS secret `netbox-secrets` so the chart renders zero random
+# material. The only chart-generated secret left is `netbox-kv` (empty redis
+# passwords — deterministic, and redis-py skips AUTH on empty creds).
+---
+# Disable bundled subcharts — external CNPG postgres + self-hosted redis.
+postgresql:
+  enabled: false
+valkey:
+  enabled: false
+
+# Django SECRET_KEY + email_password + api_token_peppers from the KSOPS secret.
+# IMPORTANT: netbox-secrets MUST contain an `email_password` key (empty is fine) —
+# the deployment's projected volume sources it from this secret unconditionally;
+# a missing key wedges pods in ContainerCreating.
+existingSecret: netbox-secrets
+
+# Bootstrap superuser (local accounts only). Keys: username/password/email/api_token.
+# Re-asserted from the secret on every pod start — change the password via the
+# SOPS secret, not the UI (UI-only changes to THIS account revert on restart).
+superuser:
+  existingSecret: netbox-secrets
+
+# Shared CNPG cluster (databases ns). Role + database: kubernetes/apps/cnpg-cluster
+# (managed role `netbox` in cluster.yaml + database-netbox.yaml). The password
+# (key postgresql-password) must equal the netbox-db-role secret there.
+externalDatabase:
+  host: postgres-rw.databases.svc.cluster.local
+  port: 5432
+  database: netbox
+  username: netbox
+  existingSecretName: netbox-secrets
+  existingSecretKey: postgresql-password
+
+# Self-hosted single redis (redis.yaml), no auth. NetBox uses two logical redis
+# DBs — tasks (RQ) on 0, caching on 1 — one instance, different DB numbers.
+tasksDatabase:
+  host: netbox-redis
+  port: 6379
+  database: 0
+cachingDatabase:
+  host: netbox-redis
+  port: 6379
+  database: 1
+
+# TLS terminates at the Cilium Gateway; Django needs the external origin for CSRF.
+csrf:
+  trustedOrigins:
+    - https://netbox.k8s-talos1.ap169homeoffice.net
+
+# Media (image attachments, uploads) is mounted by BOTH the web deployment and
+# the worker, scheduled independently across workers -> RWX on the default
+# replica-3 longhorn SC (chart-managed PVC). reports/scripts persistence stays off.
+persistence:
+  enabled: true
+  storageClass: longhorn
+  accessMode: ReadWriteMany
+  size: 5Gi
+
+# Explicit resources instead of the bitnami-common "medium" resourcesPreset.
+resourcesPreset: none
+resources:
+  requests:
+    cpu: 250m
+    memory: 768Mi
+  limits:
+    memory: 1536Mi
+worker:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 384Mi
+    limits:
+      memory: 768Mi
+
+# Keep off: no Prometheus Operator CRDs in the cluster; ingress/httpRoute are
+# handled by our own HTTPRoute manifest (httproute.yaml) on the shared Gateway.
+metrics:
+  enabled: false
+ingress:
+  enabled: false
+httpRoute:
+  enabled: false

@@ -25,6 +25,7 @@ spec:
           - { name: etcd-backup,        namespace: etcd-backup,     syncWave: "5" }
           - { name: cnpg-cluster,       namespace: databases,       syncWave: "10" }
           - { name: authentik,          namespace: authentik,       syncWave: "15" }
+          - { name: netbox,             namespace: netbox,          syncWave: "15" }
   template:
     metadata:
       name: "{{ .name }}"

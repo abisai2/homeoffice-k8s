@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: netbox
+helmCharts:
+  - name: netbox
+    # OCI-only chart (no HTTP repo). kustomize supports oci:// helmCharts repos
+    # since v5.2.1 — local v5.8.1 and the repo-server's ksops-installed kustomize
+    # both qualify (first OCI chart in this repo).
+    repo: oci://ghcr.io/netbox-community/netbox-chart
+    releaseName: netbox
+    version: "8.3.14"
+    namespace: netbox
+    valuesFile: values.yaml
+resources:
+  - redis.yaml
+  - httproute.yaml
+# netbox-secrets: secret_key, email_password, api_token_peppers, superuser
+# (username/password/email/api_token), postgresql-password — see secret.example.yaml.
+generators:
+  - secret-generator.yaml

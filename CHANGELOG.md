@@ -14,6 +14,16 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+### Added
+- netbox: NetBox IPAM/DCIM (`kubernetes/apps/netbox/`, chart 8.3.14 / app v4.6.2, first
+  OCI-only chart in the repo) as a new appset component (wave 15, peer of authentik).
+  Shared CNPG postgres via a new `netbox` managed role + `Database` CR (cnpg-cluster),
+  self-hosted redis (tasks DB 0 / cache DB 1), RWX longhorn media PVC, HTTPRoute
+  `netbox.k8s-talos1.ap169homeoffice.net` on the shared Gateway. All chart secrets pinned
+  to the KSOPS secret `netbox-secrets` (existingSecret/superuser/externalDatabase) because
+  the chart otherwise `lookup`+rand-generates them — non-deterministic under offline
+  kustomize render (see VERIFIED-VERSIONS.md).
+
 ## [0.1.3] - 2026-06-05
 
 ### Added
