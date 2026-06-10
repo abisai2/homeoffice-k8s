@@ -14,6 +14,8 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-10
+
 ### Added
 - litellm: LiteLLM proxy **v1.88.1** (`kubernetes/apps/litellm/`, wave 15, namespace
   `litellm`) — fresh instance on the cluster, independent of the appservices01 docker
