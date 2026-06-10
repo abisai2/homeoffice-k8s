@@ -1,0 +1,11 @@
+# Declarative `litellm` database in the postgres cluster, owned by the managed
+# `litellm` role (cluster.yaml). Used by the LiteLLM proxy (kubernetes/apps/litellm).
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: litellm
+spec:
+  cluster:
+    name: postgres
+  name: litellm
+  owner: litellm

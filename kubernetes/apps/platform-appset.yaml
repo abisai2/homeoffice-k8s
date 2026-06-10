@@ -27,6 +27,7 @@ spec:
           - { name: cnpg-cluster,       namespace: databases,       syncWave: "10" }
           - { name: authentik,          namespace: authentik,       syncWave: "15" }
           - { name: netbox,             namespace: netbox,          syncWave: "15" }
+          - { name: litellm,            namespace: litellm,         syncWave: "15" }
   template:
     metadata:
       name: "{{ .name }}"

@@ -1,0 +1,117 @@
+# config.yaml — LiteLLM proxy routing (k8s instance).
+# Copied from docker-services-litellm config.yaml (the appservices01 stack) MINUS
+# the Langfuse callbacks — this instance has no observability sink by design.
+#
+# Pattern: a single logical model name ("smart") routes through a primary
+# OpenRouter model, falling back to alternates on failure.
+# Add more logical groups (e.g. "fast", "cheap") by replicating the pattern.
+
+model_list:
+  # All three entries set health_check_max_tokens: 16 to safely clear the GPT-5-class
+  # min-token floor (Azure-backed providers reject max_output_tokens < 16). LiteLLM's
+  # default probe payload is max_tokens: 5; the override is generic and forward-safe
+  # against any future model with a similar floor. Verified live against OpenRouter
+  # /api/v1/models on 2026-05-28.
+
+  # ---------------------------------------------------------------------------
+  # PRIMARY tier — high-capability model for default routing
+  # ---------------------------------------------------------------------------
+  - model_name: smart
+    litellm_params:
+      # The "openrouter/" prefix tells LiteLLM to use the OpenRouter provider.
+      # Replace the slug after the prefix with the OpenRouter model id you want.
+      model: openrouter/deepseek/deepseek-v4-pro
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+      # Optional per-model timeout — protects against hung upstream calls
+      timeout: 60
+    model_info:
+      # Surfaced via /v1/models for client introspection
+      description: "Primary high-capability model (DeepSeek V4 Pro via OpenRouter)"
+      # Per-model override of the background_health_checks probe max_tokens.
+      # Default is 5; raise to 16 to clear the GPT-5-class Azure min-token floor.
+      health_check_max_tokens: 16
+      # Per-token cost — OpenRouter live pricing, verified 2026-06-05 (re-check on model swap).
+      # Without this LiteLLM has no price for this new model → cost 0 → spend untracked
+      # AND budget checks skipped. Per 1M tokens: $0.435 in / $0.87 out.
+      input_cost_per_token: 0.000000435
+      output_cost_per_token: 0.00000087
+
+  # First fallback — cross-vendor failover (Moonshot AI Kimi lineage). Different
+  # vendor than the primary (DeepSeek), so this absorbs single-provider outages
+  # at OpenRouter without falling back to the same model family.
+  - model_name: smart-fallback-1
+    litellm_params:
+      model: openrouter/moonshotai/kimi-k2.6
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+      timeout: 60
+    model_info:
+      description: "First fallback (Moonshot Kimi K2.6 via OpenRouter)"
+      health_check_max_tokens: 16
+      # Per-token cost — OpenRouter live pricing, verified 2026-06-05. Per 1M tokens: $0.684 in / $3.42 out.
+      input_cost_per_token: 0.000000684
+      output_cost_per_token: 0.00000342
+
+  # Second fallback — last-resort availability. Qwen flagship lineage — third
+  # distinct vendor in the chain (DeepSeek → Moonshot → Qwen), maximizing
+  # cross-vendor resilience against any single OpenRouter route outage.
+  - model_name: smart-fallback-2
+    litellm_params:
+      model: openrouter/qwen/qwen3.7-max
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+      timeout: 60
+    model_info:
+      description: "Second fallback (Qwen3.7 Max via OpenRouter)"
+      health_check_max_tokens: 16
+      # Per-token cost — OpenRouter live pricing, verified 2026-06-05. Per 1M tokens: $1.25 in / $3.75 out.
+      input_cost_per_token: 0.00000125
+      output_cost_per_token: 0.00000375
+
+# -----------------------------------------------------------------------------
+# Router configuration — controls retry + fallback behavior
+# -----------------------------------------------------------------------------
+router_settings:
+  # least-busy spreads load if multiple deployments share a model_name.
+  # With a single deployment per model_name, this is effectively a no-op
+  # but is set explicitly for forward-compat if you add load-balanced keys later.
+  routing_strategy: least-busy
+  # Retry the SAME model this many times before moving to the fallback chain.
+  # Keep low — OpenRouter already retries internally for transient failures.
+  num_retries: 2
+  # Delay between retries (seconds)
+  retry_after: 5
+  # Hard ceiling per-request including retries + fallbacks.
+  # Worst case: 3 models × (3 attempts × timeout 60s + 2 × retry_after 5s) = 570s.
+  # num_retries applies per-model_name in the fallback chain, so a hung primary +
+  # both fallbacks consumes ~570s. Set to 600 to give headroom and ensure the full
+  # chain can traverse before this ceiling fires.
+  request_timeout: 600
+  # Cool down a model for this many seconds after a failure before re-trying it
+  cooldown_time: 30
+
+# -----------------------------------------------------------------------------
+# Failover chains — declared per-logical-model
+# Order matters: first item in the list is tried first after primary fails.
+# -----------------------------------------------------------------------------
+litellm_settings:
+  fallbacks:
+    - smart:
+        - smart-fallback-1
+        - smart-fallback-2
+  # Drop unsupported params silently rather than erroring (compat with diverse clients)
+  drop_params: true
+
+# -----------------------------------------------------------------------------
+# Proxy-level settings (auth, UI, etc.)
+# -----------------------------------------------------------------------------
+general_settings:
+  # Master key gates the admin API and is the bootstrap auth token.
+  # Generate user keys via the proxy after first start.
+  master_key: os.environ/LITELLM_MASTER_KEY
+  # Salt for hashing user keys at rest in the DB.
+  litellm_salt_key: os.environ/LITELLM_SALT_KEY
+  # Health check the primary model on /health (cheap call, ignored failures don't crash proxy)
+  background_health_checks: true
+  health_check_interval: 300

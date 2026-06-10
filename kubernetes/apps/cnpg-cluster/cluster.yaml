@@ -29,6 +29,8 @@ spec:
   #     (authentik ns). Database created by database-authentik.yaml.
   #   - netbox: netbox-db-role <-> netbox-secrets postgresql-password (netbox ns).
   #     Database created by database-netbox.yaml.
+  #   - litellm: litellm-db-role <-> litellm-secrets DATABASE_URL password (litellm ns).
+  #     Database created by database-litellm.yaml.
   managed:
     roles:
       - name: authentik
@@ -41,3 +43,8 @@ spec:
         login: true
         passwordSecret:
           name: netbox-db-role
+      - name: litellm
+        ensure: present
+        login: true
+        passwordSecret:
+          name: litellm-db-role

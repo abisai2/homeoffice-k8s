@@ -15,6 +15,14 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 ## [Unreleased]
 
 ### Added
+- litellm: LiteLLM proxy **v1.88.1** (`kubernetes/apps/litellm/`, wave 15, namespace
+  `litellm`) — fresh instance on the cluster, independent of the appservices01 docker
+  stack (own master/salt keys, no data migration, **no Langfuse**). Plain manifests
+  (Deployment/Service/HTTPRoute/configMapGenerator + KSOPS secret), NOT the beta
+  litellm-helm chart — see the VERIFIED-VERSIONS row for the render-hazard rationale.
+  OpenRouter `smart` failover chain from the docker config (minus Langfuse callbacks);
+  DB = new `litellm` role + database on the shared CNPG cluster (litellm-db-role secret);
+  exposed at `litellm.k8s-talos1.ap169homeoffice.net` via the shared Gateway.
 - docs: `docs/UPDATE-RUNBOOK.md` — the dependency-update flow (in-cluster Renovate
   detection → schedule-gated PRs + Dependency Dashboard → human review incl. the two
   offline-render hazard checks + VERIFIED-VERSIONS row → release tag → root-app apply),
