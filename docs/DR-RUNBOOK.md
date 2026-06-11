@@ -34,8 +34,8 @@ TC=talos/clusterconfig/talosconfig
 | Layer | Protects | Wasabi prefix | Schedule | Restore § |
 |---|---|---|---|---|
 | **etcd snapshot** (Talos CronJob) | k8s API state (the cluster itself) | `etcd/` | 01:00 daily | §B |
-| **CNPG / Barman** | PostgreSQL data (authentik DB) | `cnpg/` (base + WAL) | base 02:00 daily + continuous WAL | §F |
-| **Longhorn** (RecurringJob) | PV data (authentik media, PG volumes) | `longhorn/` | 04:00 daily, retain 7 | §E |
+| **CNPG / Barman** | PostgreSQL data (authentik / netbox / litellm DBs) | `cnpg/` (base + WAL) | base 02:00 daily + continuous WAL | §F |
+| **Longhorn** (RecurringJob) | PV data (authentik + netbox media, PG volumes) | `longhorn/` | 04:00 daily, retain 7 | §E |
 | **Velero** | k8s resource manifests (all ns) | `velero/` | 03:00 daily, 30d TTL | §D |
 | **Veeam** (external) | Whole-VM cold images | Veeam repo | weekly window (P8.2) | §G |
 
@@ -111,7 +111,8 @@ cluster is the same cluster — node IPs, VIP, CA all match.
    ```bash
    ./scripts/bootstrap.sh cluster      # Gateway API CRDs + Cilium -> Argo CD + KSOPS + root app-of-apps
    ```
-   Argo resolves the pinned tag (`v0.1.2`) and syncs all 11 apps. Wait for green:
+   Argo resolves the pinned tag (the `targetRevision` in `root-app.yaml`; `v0.2.0` as of
+   2026-06-10) and syncs all platform apps. Wait for green:
    `kubectl get applications -n argocd` (all Synced/Healthy).
 5. **Re-point the live Longhorn backup target** (the seed ConfigMap only acts at first boot — same one-time catch-up as P8.1):
    ```bash
@@ -181,10 +182,12 @@ spec:
   managed:
     roles:
       - { name: authentik, ensure: present, login: true, passwordSecret: { name: authentik-db-role } }
+      - { name: netbox,    ensure: present, login: true, passwordSecret: { name: netbox-db-role } }
+      - { name: litellm,   ensure: present, login: true, passwordSecret: { name: litellm-db-role } }
 ```
 Apply the ObjectStore + credential first (they ship in `kubernetes/apps/cnpg-cluster/`), then
 this manifest. Verify: `kubectl get cluster postgres -n databases` → `readyInstances: 3`,
-phase healthy; authentik reconnects.
+phase healthy; the app DBs (authentik / netbox / litellm) reconnect.
 > NOTE: this mirrors the live `cluster.yaml` plus the `bootstrap.recovery`/`externalClusters`
 > stanzas. After recovery, revert to the git-managed `cluster.yaml` (without recovery) so Argo
 > stays in sync — or let the recovery cluster run and prune the recovery stanzas in a follow-up commit.

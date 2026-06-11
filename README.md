@@ -30,6 +30,7 @@ The authoritative state lives on disk — start here:
 | TLS | cert-manager + Cloudflare DNS-01 (Let's Encrypt) |
 | Storage | Longhorn (replicated) + **CloudNativePG** (Postgres) |
 | Identity | Authentik (SSO / OIDC) |
+| Apps | NetBox (IPAM/DCIM) · LiteLLM (LLM gateway, OpenRouter failover) |
 | Backups | Talos etcd snapshots + Velero + Longhorn + **Veeam** → external S3 (Wasabi) |
 
 ## Documentation
