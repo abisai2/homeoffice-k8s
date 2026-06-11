@@ -58,8 +58,11 @@ the authoritative list (source: `kubernetes/apps/platform-appset.yaml`):
 | 3 | barman-cloud-plugin | `cnpg-system` | CNPG backup plugin (needs cert-manager) |
 | 5 | velero | `velero` | k8s-resource backups |
 | 5 | etcd-backup | `etcd-backup` | Talos etcd snapshot CronJob |
+| 5 | renovate | `renovate` | weekly self-hosted Renovate CronJob (dependency PRs against this repo) |
 | 10 | cnpg-cluster | `databases` | `postgres` HA cluster + ObjectStore + ScheduledBackup |
 | 15 | authentik | `authentik` | SSO — consumes CNPG, Redis, Longhorn, Gateway |
+| 15 | netbox | `netbox` | IPAM/DCIM — consumes CNPG, Redis, Longhorn, Gateway |
+| 15 | litellm | `litellm` | LLM gateway (OpenRouter failover chain) — consumes CNPG, Gateway |
 
 ## Data & trust flow (one-liners)
 

@@ -14,6 +14,13 @@ and tags `vX.Y.Z`. The first tag `v0.1.0` is cut at P7.9 (the pins are pre-set t
 
 ## [Unreleased]
 
+### Fixed
+- docs: app-inventory drift — ARCHITECTURE.md sync-wave table was missing renovate,
+  netbox, and litellm (10 of 13 components); DR-RUNBOOK.md still said "authentik DB"
+  only (now 3 CNPG databases), "all 11 apps" with a `v0.1.2` pin example, and a
+  1-role `managed.roles` snippet; README stack table gained an Apps row
+  (NetBox · LiteLLM).
+
 ## [0.2.0] - 2026-06-10
 
 ### Added
